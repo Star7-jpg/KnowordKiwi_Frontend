@@ -17,6 +17,9 @@
   --color-text-secondary: #757575;
   --color-secondary: #ff4081;
   --color-secondary-hover: #f50057;
+  --color-text-error: #f44336;
+  --color-error: #e53935;
+  --color-error-hover: #d32f2f;
 }
 
 @media (prefers-color-scheme: dark) {
