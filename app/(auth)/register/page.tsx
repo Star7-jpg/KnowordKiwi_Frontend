@@ -14,6 +14,9 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { registerSchema } from "../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
+import snakecaseKeys from "snakecase-keys";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -21,6 +24,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const { handleAxiosError } = useAxiosErrorHandler();
 
   const {
     register,
@@ -56,9 +60,18 @@ export default function RegisterPage() {
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
   // En el último paso, enviar todo el formulario
-  const onSubmit = (data: RegisterFormData) => {
-    console.log({ ...data, avatar });
-    // Aquí puedes hacer el registro final
+  const onSubmit = async (data: RegisterFormData) => {
+    const dataSnakeCase = snakecaseKeys(data, { deep: true });
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/register/",
+        dataSnakeCase,
+      );
+      console.log("Registro exitoso:", response.data);
+    } catch (error) {
+      handleAxiosError(error);
+      console.error("Error en el registro:", error);
+    }
   };
 
   return (
@@ -160,7 +173,7 @@ export default function RegisterPage() {
             </Field>
             <Field>
               <Label htmlFor="realName" className="block text-sm font-medium">
-                Nombre real (opcional)
+                Nombre real
               </Label>
               <Input
                 type="text"

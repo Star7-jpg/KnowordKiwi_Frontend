@@ -22,10 +22,13 @@ export const registerSchema = z.object({
     .string()
     .min(3, "Tu nombre de usuario debe tener al menos 3 caracteres.")
     .max(20, "Tu nombre de usuario no puede tener más de 20 caracteres."),
-  realName: z.string().optional(),
+  realName: z
+    .string()
+    .max(50, "Tu nombre real no puede tener más de 50 caracteres."),
   bio: z
     .string()
-    .max(160, "Tu biografía no puede tener más de 160 caracteres."),
+    .max(160, "Tu biografía no puede tener más de 160 caracteres.")
+    .optional(),
 });
 
 export const resetPasswordSchema = z.object({
