@@ -47,7 +47,7 @@ export default function RegisterPage() {
   const stepFields: Record<number, (keyof RegisterFormData)[]> = {
     1: ["email", "password"],
     2: ["username", "realName"],
-    3: ["bio"], // avatar es opcional y no está en el schema
+    3: ["bio"],
   };
 
   // Avanzar de paso solo si los campos del paso actual son válidos
@@ -199,7 +199,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover disabled:opacity-50"
-                disabled={!username}
+                disabled={!username || !realName}
                 onClick={handleNextStep}
               >
                 Siguiente

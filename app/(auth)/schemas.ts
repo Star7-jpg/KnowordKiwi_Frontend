@@ -24,6 +24,7 @@ export const registerSchema = z.object({
     .max(20, "Tu nombre de usuario no puede tener más de 20 caracteres."),
   realName: z
     .string()
+    .min(3, "Tu nombre real debe tener al menos 3 caracteres.")
     .max(50, "Tu nombre real no puede tener más de 50 caracteres."),
   bio: z
     .string()
@@ -31,6 +32,7 @@ export const registerSchema = z.object({
     .optional(),
 });
 
+// Este esquema define las reglas de validación para el formulario de restablecimiento de contraseña
 export const resetPasswordSchema = z.object({
   email: z
     .string()
