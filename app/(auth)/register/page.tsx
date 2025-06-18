@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
   Button,
   Field,
@@ -19,6 +19,7 @@ import { registerSchema } from "../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
+import { debounce } from "lodash";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -30,6 +31,16 @@ export default function RegisterPage() {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const { handleAxiosError } = useAxiosErrorHandler();
 
+  //Estados para validacion asíncrona
+  const [isEmailAvailable, setIsEmailAvailable] = useState<boolean | null>(
+    null,
+  );
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
+    boolean | null
+  >(null);
+  const [isEmailChecking, setIsEmailChecking] = useState(false);
+  const [isUsernameChecking, setIsUsernameChecking] = useState(false);
+
   const router = useRouter();
 
   const {
@@ -37,6 +48,8 @@ export default function RegisterPage() {
     handleSubmit,
     trigger,
     watch,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -56,11 +69,141 @@ export default function RegisterPage() {
     3: ["bio"],
   };
 
-  // Avanzar de paso solo si los campos del paso actual son válidos
+  // Funcion para verificar disponibilidad de email
+  const checkEmailAvailability = useCallback(
+    debounce(async (email: string) => {
+      if (!email) {
+        setIsEmailAvailable(null);
+        clearErrors("email"); // Limpiar errores si el campo está vacío
+        return;
+      }
+      setIsEmailChecking(true);
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/check-email/",
+          { email },
+        );
+        if (response.data.available) {
+          setIsEmailAvailable(true);
+          clearErrors("email");
+        } else {
+          setIsEmailAvailable(false);
+          setError("email", {
+            type: "manual",
+            message: response.data.message || "Este correo ya está en uso.",
+          });
+        }
+      } catch (error) {
+        console.error("Error al verificar el correo:", error);
+        setIsEmailAvailable(false);
+        setError("email", {
+          type: "manual",
+          message:
+            "Error al verificar el correo. Inténtalo de nuevo más tarde.",
+        });
+      } finally {
+        setIsEmailChecking(false);
+      }
+    }, 500), // Esperar 500ms antes de hacer la petición
+    [setError, clearErrors],
+  );
+
+  // Efecto para observar cambios en el email y disparar la validación
+  useEffect(() => {
+    if (step === 1) {
+      checkEmailAvailability(email);
+    }
+    // Limpiar la función debounce si el componente se desmonta o el email cambia
+    return () => checkEmailAvailability.cancel();
+  }, [email, step, checkEmailAvailability]);
+
+  // Función para verificar la disponibilidad del nombre de usuario
+  const checkUsernameAvailability = useCallback(
+    debounce(async (username: string) => {
+      if (!username) {
+        setIsUsernameAvailable(null);
+        clearErrors("username"); // Limpiar errores si el campo está vacío
+        return;
+      }
+      setIsUsernameChecking(true);
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/check-username/",
+          { username },
+        );
+        if (response.data.available) {
+          setIsUsernameAvailable(true);
+          clearErrors("username");
+        } else {
+          setIsUsernameAvailable(false);
+          setError("username", {
+            type: "manual",
+            message:
+              response.data.message || "Este nombre de usuario ya está en uso.",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking username availability:", error);
+        setIsUsernameAvailable(false);
+        setError("username", {
+          type: "manual",
+          message: "Error al verificar el nombre de usuario. Intenta de nuevo.",
+        });
+      } finally {
+        setIsUsernameChecking(false);
+      }
+    }, 500), // Debounce de 500ms
+    [setError, clearErrors],
+  );
+
+  // Efecto para observar cambios en el username y disparar la validación
+  useEffect(() => {
+    if (step === 2) {
+      checkUsernameAvailability(username);
+    }
+    return () => checkUsernameAvailability.cancel();
+  }, [username, step, checkUsernameAvailability]);
+
+  // Avanzar de paso solo si los campos del paso actual son válidos Y las validaciones asíncronas pasaron
   const handleNextStep = async () => {
     const fields = stepFields[step];
     const valid = await trigger(fields);
-    if (valid) setStep((prev) => prev + 1);
+
+    if (valid) {
+      if (step === 1) {
+        // Asegúrate de que el email esté disponible antes de avanzar
+        if (isEmailAvailable === true) {
+          setStep((prev) => prev + 1);
+        } else if (isEmailAvailable === false) {
+          // Si no está disponible, el error ya se habrá mostrado por setError
+          return;
+        } else {
+          // Si la verificación aún está en curso, no avanzar
+          // Podrías mostrar un mensaje al usuario para que espere
+          setError("email", {
+            type: "manual",
+            message:
+              "Por favor, espera mientras verificamos la disponibilidad del correo.",
+          });
+        }
+      } else if (step === 2) {
+        // Asegúrate de que el nombre de usuario esté disponible antes de avanzar
+        if (isUsernameAvailable === true) {
+          setStep((prev) => prev + 1);
+        } else if (isUsernameAvailable === false) {
+          // Si no está disponible, el error ya se habrá mostrado por setError
+          return;
+        } else {
+          setError("username", {
+            type: "manual",
+            message:
+              "Por favor, espera mientras verificamos la disponibilidad del nombre de usuario.",
+          });
+        }
+      } else {
+        setStep((prev) => prev + 1);
+      }
+    }
   };
 
   const handlePrevStep = () => setStep((prev) => prev - 1);
@@ -81,6 +224,7 @@ export default function RegisterPage() {
     } catch (error) {
       handleAxiosError(error);
       console.error("Error en el registro:", error);
+      // Manejar errores de envío
       setSubmissionError(
         "Hubo un problema al conectar con nuestros servidores. Por favor, revisa tu conexión a internet e inténtalo de nuevo.",
       );
@@ -126,9 +270,22 @@ export default function RegisterPage() {
                   id="email"
                   autoComplete="email"
                   value={email}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                  className={`
+                    mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm transition duration-150 ease-in-out
+                    ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}
+                  `}
                   {...register("email")}
                 />
+                {/* Mostrar VERDE solo si no hay errores (ni de Zod ni manuales) y está disponible */}
+                {!isEmailChecking &&
+                  !errors.email &&
+                  isEmailAvailable === true &&
+                  email && (
+                    <p className="text-green-500 text-sm mt-2">
+                      Correo disponible 👍
+                    </p>
+                  )}
+                {/* Mostrar ROJO solo si hay errores (ya sea de Zod o manuales) */}
                 {errors.email && (
                   <p className="text-red-500 font-light text-sm mt-2">
                     {errors.email.message}
@@ -143,7 +300,7 @@ export default function RegisterPage() {
                   type="password"
                   id="password"
                   value={password}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
                   {...register("password")}
                 />
                 {errors.password && (
@@ -156,7 +313,12 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-hover disabled:opacity-50"
-                  disabled={!email || !password}
+                  disabled={
+                    !email ||
+                    !password ||
+                    isEmailChecking ||
+                    isEmailAvailable === false
+                  }
                   onClick={handleNextStep}
                 >
                   Continuar
@@ -179,10 +341,23 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   id="username"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                  className={`
+                    mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm transition duration-150 ease-in-out
+                    ${errors.username ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}
+                  `}
                   value={username}
                   {...register("username")}
                 />
+                {/* Mostrar VERDE solo si no hay errores (ni de Zod ni manuales) y está disponible */}
+                {!isUsernameChecking &&
+                  !errors.username &&
+                  isUsernameAvailable === true &&
+                  username && (
+                    <p className="text-green-500 text-sm mt-2">
+                      Nombre de usuario disponible 👍
+                    </p>
+                  )}
+                {/* Mostrar ROJO solo si hay errores (ya sea de Zod o manuales) */}
                 {errors.username && (
                   <p className="text-red-500 font-light text-sm mt-2">
                     {errors.username.message}
@@ -196,7 +371,7 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   id="realName"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
                   value={realName}
                   {...register("realName")}
                 />
@@ -217,7 +392,12 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover disabled:opacity-50"
-                  disabled={!username || !realName}
+                  disabled={
+                    !username ||
+                    !realName ||
+                    isUsernameChecking ||
+                    isUsernameAvailable === false
+                  }
                   onClick={handleNextStep}
                 >
                   Siguiente
@@ -282,7 +462,7 @@ export default function RegisterPage() {
                 </Label>
                 <Textarea
                   id="bio"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
                   rows={3}
                   value={bio}
                   {...register("bio")}

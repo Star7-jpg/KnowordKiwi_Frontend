@@ -1,7 +1,11 @@
+"use client";
 import { Button } from "@headlessui/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function VerifyEmailPage() {
+  const router = useRouter();
+
   return (
     <div className="max-w-md mx-auto p-6 bg-gray-900 rounded-lg shadow-lg text-center text-white">
       <h1 className="text-3xl font-bold mb-4 text-primary">
@@ -22,7 +26,10 @@ export default function VerifyEmailPage() {
         <Button className="w-full px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors duration-200">
           Reenviar
         </Button>
-        <Button className="w-full px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors duration-200">
+        <Button
+          onClick={() => router.push("/login")}
+          className="w-full px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors duration-200"
+        >
           ¡Lo he recibido!
         </Button>
       </div>
