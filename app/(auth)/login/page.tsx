@@ -15,30 +15,37 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
+import ErrorModal from "@/components/shared/ErrorModal";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [backendError, setBackendError] = useState<string | null>(null); // Nuevo estado para errores del backend
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
   const {
     register,
     handleSubmit,
     watch,
     setError,
     formState: { errors },
+    getValues, // Añadir getValues para reintentar el inicio de sesión con los datos actuales (dentro del modal de error)
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onTouched",
   });
 
-  watch("email"); // Para activar la validación en tiempo real
-  watch("password"); // Para activar la validación en tiempo real
+  watch("email");
+  watch("password");
 
   const { handleAxiosError } = useAxiosErrorHandler();
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
     setBackendError(null); // Limpiar errores previos del backend
+    setSubmissionError(null); // Limpiar errores de envío previos
+    setShowErrorModal(false); // Cerrar el modal de error si estaba abierto
     try {
       const response = await axios.post(
         "http://localhost:8000/api/login/",
@@ -56,11 +63,25 @@ export default function LoginPage() {
         });
       } else {
         handleAxiosError(error);
+        setSubmissionError(
+          "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.",
+        );
+        setShowErrorModal(true);
       }
       console.error("Error al iniciar sesión:", error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setSubmissionError(null);
+  };
+
+  const handleRetryConnection = () => {
+    setShowErrorModal(false);
+    onSubmit(getValues()); // Reintentar el envío del formulario con los valores actuales
   };
 
   return (
@@ -106,7 +127,7 @@ export default function LoginPage() {
           )}
         </Field>
         {backendError && ( // Mostrar el error del backend si existe
-          <p className="text-text-error font-light text-sm text-center mt-2">
+          <p className="text-text-error font-medium text-sm text-center mt-2">
             {backendError}
           </p>
         )}
@@ -125,6 +146,13 @@ export default function LoginPage() {
           {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
         </Button>
       </Fieldset>
+      {showErrorModal && submissionError && (
+        <ErrorModal
+          message={submissionError}
+          onClose={handleCloseErrorModal}
+          onRetry={handleRetryConnection}
+        />
+      )}
     </form>
   );
 }
