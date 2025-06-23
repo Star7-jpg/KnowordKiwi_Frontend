@@ -14,8 +14,10 @@ import axios from "axios";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas";
+import { useAuthStore } from "@/store/authStore";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
+import publicApiClient from "@/services/publicApiClient";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -25,6 +27,8 @@ export default function LoginPage() {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const setUser = useAuthStore((state) => state.setUser);
   const {
     register,
     handleSubmit,
@@ -47,14 +51,17 @@ export default function LoginPage() {
     setSubmissionError(null); // Limpiar errores de envío previos
     setShowErrorModal(false); // Cerrar el modal de error si estaba abierto
     try {
-      const response = await axios.post(
+      const response = await publicApiClient.post(
         "http://localhost:8000/api/login/",
         data,
       );
       console.log("Respuesta del servidor:", response.data);
+      setAccessToken(response.data.access);
+      setUser(response.data.user);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setBackendError(error.response.data.non_field_errors);
+        // Errores manuales para indicar error en las credenciales
         setError("email", {
           type: "manual",
         });
@@ -68,7 +75,6 @@ export default function LoginPage() {
         );
         setShowErrorModal(true);
       }
-      console.error("Error al iniciar sesión:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +108,7 @@ export default function LoginPage() {
             type="email"
             autoComplete="email"
             required
-            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
+            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
             {...register("email")}
           />
           {errors.email && (
@@ -116,7 +122,7 @@ export default function LoginPage() {
           <Input
             type="password"
             autoComplete="current-password"
-            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
+            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
             required
             {...register("password")}
           />
@@ -133,7 +139,7 @@ export default function LoginPage() {
         )}
         <span>¿Olvidaste tu contraseña? </span>
         <Link
-          href="/reset-password"
+          href="/forgot-password"
           className="text-primary hover:text-primary-hover transition duration-150 ease-in-out"
         >
           Recupérala en segundos.

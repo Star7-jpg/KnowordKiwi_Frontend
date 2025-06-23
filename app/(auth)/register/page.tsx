@@ -10,7 +10,7 @@ import {
   Textarea,
   Transition,
 } from "@headlessui/react";
-import axios from "axios";
+import publicApiClient from "@/services/publicApiClient";
 import snakecaseKeys from "snakecase-keys";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -79,7 +79,7 @@ export default function RegisterPage() {
       }
       setIsEmailChecking(true);
       try {
-        const response = await axios.post(
+        const response = await publicApiClient.post(
           "http://localhost:8000/api/check-email/",
           { email },
         );
@@ -127,7 +127,7 @@ export default function RegisterPage() {
       }
       setIsUsernameChecking(true);
       try {
-        const response = await axios.post(
+        const response = await publicApiClient.post(
           "http://localhost:8000/api/check-username/",
           { username },
         );
@@ -214,7 +214,7 @@ export default function RegisterPage() {
     setSubmissionError(null);
     const dataSnakeCase = snakecaseKeys(data, { deep: true });
     try {
-      const response = await axios.post(
+      const response = await publicApiClient.post(
         "http://localhost:8000/api/register/",
         dataSnakeCase,
       );

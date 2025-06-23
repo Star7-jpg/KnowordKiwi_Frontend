@@ -7,70 +7,177 @@ import {
   Label,
   Legend,
 } from "@headlessui/react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordSchema } from "../schemas"; // Asumimos que tendrás este schema
+import { resetPasswordSchema } from "../schemas";
+import { useRouter } from "next/navigation";
+import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
+import publicApiClient from "@/services/publicApiClient";
+import axios from "axios";
+import ErrorModal from "@/components/shared/ErrorModal";
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const uid = searchParams.get("uid");
+  const router = useRouter();
+  const [areParamsValid, setAreParamsValid] = useState(false);
+
   const {
     register,
+    watch,
+    trigger,
     handleSubmit,
-    formState: { errors },
+    getValues,
+    clearErrors,
+    formState: { errors, isValid },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
+    mode: "onTouched",
   });
 
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
+  const { handleAxiosError } = useAxiosErrorHandler();
+
+  useEffect(() => {
+    if (!uid && !token) {
+      console.error("uid o token no encontrados en la URL");
+      setBackendError(
+        "Parece que tu enlace no es valido. Por favor, solicita un nuevo enlace.",
+      );
+      setAreParamsValid(false);
+    } else {
+      setAreParamsValid(true);
+    }
+  }, [uid, token, router]);
+
+  useEffect(() => {
+    if (password !== confirmPassword) {
+      trigger("confirmPassword");
+    } else {
+      clearErrors("confirmPassword");
+    }
+  }, [password, confirmPassword, trigger]);
+
+  const onSubmit = async (data: ResetPasswordFormData) => {
+    if (!uid || !token) {
+      setBackendError(
+        "Parece que tu enlace no es valido. Por favor, solicita un nuevo enlace.",
+      );
+      return;
+    }
+    setIsSubmitting(true);
+    setBackendError(null);
+    setSubmissionError(null);
+    setShowErrorModal(false);
+
+    try {
+      await publicApiClient.post(
+        "http://localhost:8000/api/password-reset/confirm/",
+        {
+          password: data.password,
+          uid: uid,
+          token: token,
+        },
+      );
+      console.log("Contraseña restablecida con éxito.");
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        setBackendError(error.response.data.error);
+      } else {
+        handleAxiosError(error);
+        setSubmissionError(
+          "Hubo un problema al conectar con nuestros servidores. Por favor, reintenta de nuevo.",
+        );
+        setShowErrorModal(true);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setSubmissionError(null);
+  };
+
+  const handleRetryConnection = () => {
+    setShowErrorModal(false);
+    onSubmit(getValues()); // Reintentar el envío del formulario con los valores actuales
+  };
+
   return (
-    <form
-      onSubmit={handleSubmit((data) => {
-        console.log(data);
-        // lógica para enviar la solicitud de recuperación
-      })}
-    >
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Fieldset className="space-y-8 bg-gray-900 rounded-lg shadow-lg max-w-lg p-8 mx-auto my-12">
         <Legend className="text-3xl font-bold text-center">
-          Restablece tu contraseña
+          Crea una nueva contraseña
         </Legend>
+
         <Field>
-          <h3 className="font-light text-center mb-4 text-gray-300">
-            Ingresa tu correo electrónico para recibir un enlace de
-            recuperación.
-          </h3>
-          <Label className="block text-sm font-medium">
-            Correo Electrónico
-          </Label>
+          <Label className="block text-sm font-medium">Nueva contraseña</Label>
           <Input
-            type="email"
-            autoComplete="email"
+            type="password"
+            autoComplete="new-password"
             required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-            {...register("email")}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
+            {...register("password")}
           />
-          {errors.email && (
+          {errors.password && (
             <p className="text-red-500 font-light text-sm mt-2">
-              {errors.email.message}
+              {errors.password.message}
             </p>
           )}
         </Field>
+
+        <Field>
+          <Label className="block text-sm font-medium">
+            Confirmar contraseña
+          </Label>
+          <Input
+            type="password"
+            autoComplete="new-password"
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && (
+            <p className="text-red-500 font-light text-sm mt-2">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </Field>
+        {backendError && ( // Mostrar el error del backend si existe
+          <p className="text-text-error font-medium text-sm text-center mt-2">
+            {backendError}
+          </p>
+        )}
+
         <Button
           type="submit"
           className="w-full bg-primary text-white font-bold py-2 px-4 rounded hover:bg-primary-hover mt-6 transition duration-300"
+          disabled={!isValid || isSubmitting}
         >
-          Enviar enlace de recuperación
+          {isSubmitting ? "Guardando..." : "Guardar nueva contraseña"}
         </Button>
-        <div className="text-center mt-4">
-          <Link
-            href="/login"
-            className="text-primary hover:text-primary-hover transition duration-150 ease-in-out text-sm"
-          >
-            Volver al inicio de sesión
-          </Link>
-        </div>
       </Fieldset>
+      {showErrorModal && submissionError && (
+        <ErrorModal
+          message={submissionError}
+          onClose={handleCloseErrorModal}
+          onRetry={handleRetryConnection}
+        />
+      )}
     </form>
   );
 }

@@ -33,8 +33,20 @@ export const registerSchema = z.object({
 });
 
 // Este esquema define las reglas de validación para el formulario de restablecimiento de contraseña
-export const resetPasswordSchema = z.object({
+export const forgotPasswordSchema = z.object({
   email: z
     .string()
     .email("El correo no es válido. Verifica que esté bien escrito."),
 });
+
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "La contraseña debe tener al menos 8 caracteres"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
