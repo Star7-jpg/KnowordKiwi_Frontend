@@ -8,9 +8,10 @@ export default function ProfilePage() {
   return (
     <div>
       <NavbarCopy />
-      <Banner />
-      <LateralMenu />
-      <Avatar src="/default-avatar.jpeg" size="lg" editable={false} />
+      <div className="flex">
+        <LateralMenu />
+        <Banner />
+      </div>
     </div>
   );
 }
