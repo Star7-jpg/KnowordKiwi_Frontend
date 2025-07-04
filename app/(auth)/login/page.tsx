@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Button,
   Field,
@@ -18,6 +19,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
 import publicApiClient from "@/services/publicApiClient";
+import { useRouter } from "next/navigation";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -26,16 +28,18 @@ export default function LoginPage() {
   const [backendError, setBackendError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const router = useRouter();
 
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
   const setUser = useAuthStore((state) => state.setUser);
+
   const {
     register,
     handleSubmit,
     watch,
     setError,
     formState: { errors },
-    getValues, // Añadir getValues para reintentar el inicio de sesión con los datos actuales (dentro del modal de error)
+    getValues, //añadir getValues para reintentar el inicio de sesión con los datos actuales (dentro del modal de error)
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onTouched",
@@ -45,33 +49,35 @@ export default function LoginPage() {
   watch("password");
 
   const { handleAxiosError } = useAxiosErrorHandler();
+
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    setBackendError(null); // Limpiar errores previos del backend
+    setBackendError(null); // Limipiar errores previos del backend
     setSubmissionError(null); // Limpiar errores de envío previos
-    setShowErrorModal(false); // Cerrar el modal de error si estaba abierto
+    setShowErrorModal(false); // Cerrar modal de error si estaba abierto
+
     try {
       const response = await publicApiClient.post(
         "http://localhost:8000/api/login/",
-        data,
+        data
       );
-      console.log("Respuesta del servidor:", response.data);
-      setAccessToken(response.data.access);
-      setUser(response.data.user);
+
+      const { access, user } = response.data;
+
+      setAccessToken(access);
+      setUser(user);
+      //Redirige al perfil dinámico (por ID o username)
+      router.push(`/profile/${user.id}`);// usar user.username si queremos 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setBackendError(error.response.data.non_field_errors);
-        // Errores manuales para indicar error en las credenciales
-        setError("email", {
-          type: "manual",
-        });
-        setError("password", {
-          type: "manual",
-        });
+        //Errores manuales para indicar error en las credenciales
+        setError("email", { type: "manual" });
+        setError("password", { type: "manual" });
       } else {
         handleAxiosError(error);
         setSubmissionError(
-          "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.",
+          "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde."
         );
         setShowErrorModal(true);
       }
@@ -87,7 +93,7 @@ export default function LoginPage() {
 
   const handleRetryConnection = () => {
     setShowErrorModal(false);
-    onSubmit(getValues()); // Reintentar el envío del formulario con los valores actuales
+    onSubmit(getValues());// Reintentar el envio del formulario con los valores actuales
   };
 
   return (
@@ -101,14 +107,13 @@ export default function LoginPage() {
             Aprende, comparte y crece junto a una comunidad que ama el
             conocimiento.
           </h3>
-          <Label className="block text-sm font-medium">
-            Correo Electrónico
-          </Label>
+          <Label className="block text-sm font-medium">Correo Electrónico</Label>
           <Input
             type="email"
             autoComplete="email"
             required
-            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
+            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.email ? "border-red-500" : "border-gray-300"
+              }`}
             {...register("email")}
           />
           {errors.email && (
@@ -122,8 +127,9 @@ export default function LoginPage() {
           <Input
             type="password"
             autoComplete="current-password"
-            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : ""}`}
             required
+            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : "border-gray-300"
+              }`}
             {...register("password")}
           />
           {errors.password && (
@@ -132,7 +138,7 @@ export default function LoginPage() {
             </p>
           )}
         </Field>
-        {backendError && ( // Mostrar el error del backend si existe
+        {backendError && ( //Mostrar error del backend si existe
           <p className="text-text-error font-medium text-sm text-center mt-2">
             {backendError}
           </p>
@@ -147,7 +153,7 @@ export default function LoginPage() {
         <Button
           type="submit"
           className="w-full bg-primary text-white font-bold py-2 px-4 rounded hover:bg-primary-hover mt-6 transition duration-300"
-          disabled={isSubmitting} // Deshabilitar el botón mientras se envía
+          disabled={isSubmitting}//Deshabilitar el botón mientras se envía
         >
           {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
         </Button>
