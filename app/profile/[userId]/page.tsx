@@ -1,13 +1,11 @@
-import { Avatar } from "@/components/ui/userProfile/Avatar";
 import { Banner } from "./components/Banner";
-import { Navbar } from "@/components/ui/navbar/Navbar";
-import NavbarCopy from "@/components/ui/navbar/NavbarCopy";
+import Navbar from "@/components/ui/navbar/Navbar";
 import LateralMenu from "@/components/shared/LateralMenu";
 
 export default function ProfilePage() {
   return (
     <div>
-      <NavbarCopy />
+      <Navbar />
       <div className="flex">
         <LateralMenu />
         <Banner />
