@@ -21,18 +21,17 @@ export default function Page() {
             <MenuItem key={item.name}>
               {({ active }) => (
                 <li>
-                  <Link href={item.href} legacyBehavior>
-                    <a
-                      className={clsx(
-                        "inline-flex items-center gap-2 rounded-md py-2 pr-4",
-                        active
-                          ? "bg-blue-600 text-white"
-                          : "text-white hover:bg-blue-500"
-                      )}
-                    >
-                      <item.icon size={20} />
-                      {item.name}
-                    </a>
+                  <Link
+                    href={item.href}
+                    className={clsx(
+                      "inline-flex items-center gap-2 rounded-md py-2 px-4 transition-colors duration-200",
+                      active
+                        ? "bg-blue-600 text-white"
+                        : "text-white hover:bg-blue-500",
+                    )}
+                  >
+                    <item.icon size={20} />
+                    {item.name}
                   </Link>
                 </li>
               )}

@@ -12,22 +12,8 @@ import {
 } from "@headlessui/react";
 import { Avatar } from "@/components/ui/userProfile/Avatar";
 import { Pencil } from "lucide-react";
+import { profileSchema } from "../../schemas";
 
-// 1. Define Zod Schema for validation
-const profileSchema = z.object({
-  fullName: z
-    .string()
-    .min(3, "Full Name must be at least 3 characters")
-    .max(50, "Full Name cannot exceed 50 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z
-    .string()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number cannot exceed 15 digits")
-    .regex(/^\+?[0-9\s()-]*$/, "Invalid phone number format"), // Allows numbers, spaces, parentheses, hyphens, and optional leading +
-});
-
-// Infer the TypeScript type from the Zod schema
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileData extends ProfileFormData {
@@ -37,26 +23,31 @@ interface ProfileData extends ProfileFormData {
 const initialProfileData: ProfileData = {
   fullName: "Ronald Richards",
   email: "RonaldRich@example.com",
-  phone: "(219) 555-0114",
+  username: "ronaldrichards",
   profileImageUrl: "/images/ronald-richards.png", // Ensure this image exists or use a fallback
+  bio: "Software Engineer",
 };
 
 export default function ProfileEditor() {
   const [isEditing, setIsEditing] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // State for the confirmation dialog
 
-  // Initialize react-hook-form with Zod resolver
   const {
     register,
+    watch,
     handleSubmit,
     formState: { errors, isDirty }, // isDirty to check if form has been changed
     reset, // Use reset to update form values when editing starts/stops
     getValues, // To get current values without re-rendering
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: initialProfileData, // Set initial values from the data
-    mode: "onBlur", // Validate on blur
+    defaultValues: initialProfileData,
+    mode: "onTouched",
   });
+
+  watch("fullName");
+  watch("email");
+  watch("username");
 
   function closeModal() {
     setIsOpen(false);
@@ -68,17 +59,14 @@ export default function ProfileEditor() {
 
   const handleEditClick = () => {
     if (isEditing) {
-      // If exiting edit mode without saving, revert to original data
       reset(initialProfileData);
     } else {
-      // When entering edit mode, ensure form values match current data
-      reset(getValues()); // Or reset(formData) if formData was managed separately from initialProfileData
+      reset(getValues());
     }
     setIsEditing(!isEditing);
   };
 
   const onSubmit = (data: ProfileFormData) => {
-    // This function will only be called if validation passes
     console.log("Validated and submitting profile data:", data);
     // In a real application, you would send `data` to your backend here
     // e.g., api.updateProfile(data).then(...)
@@ -98,10 +86,9 @@ export default function ProfileEditor() {
 
   return (
     <div className="min-h-screen w-full p-6 sm:p-8">
-      {/* Header Section */}
       <h1 className="text-2xl font-semibold mb-6">Editar Perfil</h1>
 
-      {/* Profile Picture Section */}
+      {/* Seccion de foto de perfil */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-gray-200 mb-6">
         <Avatar src="/default-avatar.jpeg" size="lg" editable />
         <div className="flex flex-col items-center justify-center sm:items-start ml-4">
@@ -150,7 +137,7 @@ export default function ProfileEditor() {
                     errors.fullName
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500"
-                  } text-gray-800`}
+                  }`}
                 />
                 {errors.fullName && (
                   <p className="mt-1 text-sm text-red-500">
@@ -177,7 +164,7 @@ export default function ProfileEditor() {
                     errors.email
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500"
-                  } text-gray-800`}
+                  }`}
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-500">
@@ -192,32 +179,48 @@ export default function ProfileEditor() {
 
           <div>
             <label htmlFor="phone" className="block text-gray-400 text-sm mb-2">
-              Telefono
+              Nombre de usuario
             </label>
             {isEditing ? (
               <>
                 <input
-                  type="tel"
-                  id="phone"
-                  {...register("phone")}
+                  type="text"
+                  id="username"
+                  {...register("username")}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                    errors.phone
+                    errors.username
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500"
-                  } text-gray-800`}
+                  }`}
                 />
-                {errors.phone && (
+                {errors.username && (
                   <p className="mt-1 text-sm text-red-500">
-                    {errors.phone.message}
+                    {errors.username.message}
                   </p>
                 )}
               </>
             ) : (
-              <p className="font-medium">{initialProfileData.phone}</p>
+              <p className="font-medium">{initialProfileData.username}</p>
             )}
           </div>
         </div>
 
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Biografia</h2>
+        </div>
+        <div>
+          {isEditing ? (
+            <>
+              <textarea
+                id="bio"
+                {...register("bio")}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+              />
+            </>
+          ) : (
+            <p className="font-medium">{initialProfileData.bio}</p>
+          )}
+        </div>
         {isEditing && (
           <div className="mt-6 flex justify-end">
             <button
@@ -229,42 +232,9 @@ export default function ProfileEditor() {
             </button>
           </div>
         )}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Biografia ✏️</h2>
-          <button
-            type="button" // Prevent form submission
-            onClick={handleEditClick}
-            className={`flex items-center  font-medium text-sm transition-colors duration-200 ${isEditing ? "text-error hover:text-error-hover" : "text-primary hover:text-primary-hover"}`}
-          >
-            <Pencil className="h-4 w-4 mr-1" />
-            {isEditing ? "Cancelar" : "Editar"}
-          </button>
-        </div>
-        <div>
-          {isEditing ? (
-            <>
-              <textarea
-                id="bio"
-                {...register("fullName")}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  errors.fullName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                } text-gray-800`}
-              />
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.fullName.message}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="font-medium">{initialProfileData.fullName}</p>
-          )}
-        </div>
       </form>
 
-      {/* Headless UI Dialog for Save Confirmation */}
+      {/* Headless UI Modal para confirmacion de edicion */}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <TransitionChild
@@ -290,15 +260,15 @@ export default function ProfileEditor() {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
                   <DialogTitle
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6"
                   >
                     Perfil Actualizado Con Exito 🎉
                   </DialogTitle>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-400">
                       Tu informacion de perfil se ha actualizado correctamente.
                     </p>
                   </div>
@@ -306,7 +276,7 @@ export default function ProfileEditor() {
                   <div className="mt-4">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                       onClick={closeModal}
                     >
                       Entendido, gracias
