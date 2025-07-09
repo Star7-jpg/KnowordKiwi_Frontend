@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Esquema para validacion de edicion de usuario
 export const profileSchema = z.object({
-  fullName: z
+  real_name: z
     .string()
     .min(3, "Tu nombre real debe tener al menos 3 caracteres.")
     .max(50, "Tu nombre real no puede tener más de 50 caracteres."),

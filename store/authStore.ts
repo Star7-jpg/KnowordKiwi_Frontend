@@ -5,14 +5,25 @@ import privateApiClient from "@/services/privateApiClient";
 
 type AuthState = {
   accessToken: string | null;
-  user: Record<string, string> | null;
+  user: User | null;
   isAuthenticated: boolean;
   setAccessToken: (accessToken: string) => void;
-  setUser: (user: Record<string, string>) => void;
+  setUser: (user: Partial<User> | null) => void;
   clearTokens: () => void; // Para cerrar sesión y limpiar los tokens
   initializeAuth: () => Promise<void>; // Acción para la lógica de carga inicial/refresco
   loginUser: (accessToken: string) => void; // Acción para cuando el usuario inicia sesión por primera vez
   logoutUser: () => void;
+};
+
+type User = {
+  id: string;
+  email: string;
+  username: string;
+  real_name: string;
+  avatar_url: string;
+  bio: string;
+  is_active: boolean;
+  groups: string[];
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -36,11 +47,20 @@ export const useAuthStore = create<AuthState>()(
 
     /**
      * Establece la información del usuario en el store.
-     * @param user Un objeto con la información del usuario autenticado.
+     * Si se pasa un objeto parcial, se fusionará con el usuario existente.
+     * Si se pasa null, se borrará el usuario.
+     * @param user Un objeto parcial o completo con la información del usuario.
      */
-    setUser: (user) => {
-      set({ user });
-    },
+    setUser: (user) =>
+      set((state) => {
+        const newUser = user ? { ...state.user, ...user } : null;
+        if (newUser) {
+          sessionStorage.setItem("user", JSON.stringify(newUser));
+        } else {
+          sessionStorage.removeItem("user");
+        }
+        return { user: newUser as User | null };
+      }),
 
     /**
      * Limpia todos los tokens y la información del usuario en el store.
@@ -49,8 +69,7 @@ export const useAuthStore = create<AuthState>()(
     clearTokens: () => {
       set({ accessToken: null, user: null, isAuthenticated: false });
       sessionStorage.removeItem("accessToken");
-      // El refresh_token se gestiona en una cookie HTTP-Only por el backend,
-      // así que no lo borramos aquí directamente. El logout del backend se encargará.
+      sessionStorage.removeItem("user");
     },
 
     /**
@@ -66,11 +85,20 @@ export const useAuthStore = create<AuthState>()(
      * Intenta refrescar el token de acceso utilizando el refresh_token de la cookie.
      */
     initializeAuth: async () => {
-      const { setAccessToken, clearTokens } = get();
+      const { setAccessToken, clearTokens, setUser } = get();
 
       const tokenFromSession = sessionStorage.getItem("accessToken");
+      const userFromSession = sessionStorage.getItem("user");
       if (tokenFromSession) {
         setAccessToken(tokenFromSession);
+        if (userFromSession) {
+          try {
+            setUser(JSON.parse(userFromSession));
+          } catch (error: unknown) {
+            console.log("Error al parsear el usuario de la sesión:", error);
+            sessionStorage.removeItem("user");
+          }
+        }
         return;
       }
 

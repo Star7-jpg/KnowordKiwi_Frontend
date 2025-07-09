@@ -1,5 +1,5 @@
 "use client";
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,41 +13,53 @@ import {
 import { Avatar } from "@/components/ui/userProfile/Avatar";
 import { Pencil } from "lucide-react";
 import { profileSchema } from "../../schemas";
+import { useAuthStore } from "@/store/authStore";
+import privateApiClient from "@/services/privateApiClient";
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileData extends ProfileFormData {
-  profileImageUrl: string;
+  avatar_url: string;
 }
-
-const initialProfileData: ProfileData = {
-  fullName: "Ronald Richards",
-  email: "RonaldRich@example.com",
-  username: "ronaldrichards",
-  profileImageUrl: "/images/ronald-richards.png", // Ensure this image exists or use a fallback
-  bio: "Software Engineer",
-};
 
 export default function ProfileEditor() {
   const [isEditing, setIsEditing] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // State for the confirmation dialog
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+
+  const initialProfileData: ProfileData = {
+    real_name: user?.real_name || "",
+    email: user?.email || "",
+    username: user?.username || "",
+    bio: user?.bio || "",
+    avatar_url: user?.avatar_url || "",
+  };
 
   const {
     register,
-    watch,
     handleSubmit,
-    formState: { errors, isDirty }, // isDirty to check if form has been changed
-    reset, // Use reset to update form values when editing starts/stops
-    getValues, // To get current values without re-rendering
+    formState: { errors, isDirty }, // isDirty para verificar si hay cambios en el formulario
+    reset,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: initialProfileData,
     mode: "onTouched",
   });
 
-  watch("fullName");
-  watch("email");
-  watch("username");
+  // Este efecto mantiene el formulario sincronizado con el estado global del usuario.
+  // Se ejecutará cuando el componente se monte por primera vez y cada vez que el objeto 'user' en el store cambie.
+  useEffect(() => {
+    if (user) {
+      reset({
+        real_name: user.real_name || "",
+        email: user.email || "",
+        username: user.username || "",
+        bio: user.bio || "",
+      });
+    }
+  }, [user, reset]);
 
   function closeModal() {
     setIsOpen(false);
@@ -59,29 +71,40 @@ export default function ProfileEditor() {
 
   const handleEditClick = () => {
     if (isEditing) {
-      reset(initialProfileData);
-    } else {
-      reset(getValues());
+      // Al hacer clic en "Cancelar", reseteamos
+      // el formulario a los valores actuales del store.
+      if (user) {
+        reset({
+          real_name: user.real_name || "",
+          email: user.email || "",
+          username: user.username || "",
+          bio: user.bio || "",
+        });
+      }
     }
-    setIsEditing(!isEditing);
+    setIsEditing((prev) => !prev);
   };
 
-  const onSubmit = (data: ProfileFormData) => {
-    console.log("Validated and submitting profile data:", data);
-    // In a real application, you would send `data` to your backend here
-    // e.g., api.updateProfile(data).then(...)
+  const onSubmit = async (data: ProfileFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Asumimos que el endpoint para actualizar es /users/me/ y usa PATCH
+      // const response = await privateApiClient.patch(`/users/me/`, data);
 
-    // For this example, open a confirmation dialog
-    openModal();
-    // After successful save (and confirmation), update initial data and exit edit mode
-    // Note: In a real app, initialProfileData would likely come from an API call or context
-    // For now, let's assume the save is successful and update local state for display
-    // For a real app, you would dispatch an action or refetch data
-    // For demonstration, let's update initialProfileData (though usually you don't mutate props/initial state directly)
-    // Here, we simulate updating the 'source of truth' for the profile data
-    Object.assign(initialProfileData, data); // This is a simplistic way for demo, be careful with direct mutation
-    setIsEditing(false); // Exit edit mode
-    reset(initialProfileData); // Re-initialize form with new "saved" data
+      // Actualizamos el estado global de Zustand con la respuesta del API
+      setUser(data);
+
+      setIsEditing(false); // Salir del modo edición
+      openModal(); // Mostrar modal de éxito
+      console.log(user);
+    } catch (error) {
+      console.error("Error al actualizar el perfil:", error);
+      alert(
+        "Hubo un error al actualizar tu perfil. Por favor, inténtalo de nuevo.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,7 +145,7 @@ export default function ProfileEditor() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8">
           <div>
             <label
-              htmlFor="fullName"
+              htmlFor="real_name"
               className="block text-gray-400 text-sm mb-2"
             >
               Nombre Completo
@@ -131,22 +154,22 @@ export default function ProfileEditor() {
               <>
                 <input
                   type="text"
-                  id="fullName"
-                  {...register("fullName")}
+                  id="real_name"
+                  {...register("real_name")}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                    errors.fullName
+                    errors.real_name
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500"
                   }`}
                 />
-                {errors.fullName && (
+                {errors.real_name && (
                   <p className="mt-1 text-sm text-red-500">
-                    {errors.fullName.message}
+                    {errors.real_name.message}
                   </p>
                 )}
               </>
             ) : (
-              <p className="font-medium">{initialProfileData.fullName}</p>
+              <p className="font-medium">{user?.real_name}</p>
             )}
           </div>
 
@@ -173,7 +196,7 @@ export default function ProfileEditor() {
                 )}
               </>
             ) : (
-              <p className="font-medium">{initialProfileData.email}</p>
+              <p className="font-medium">{user?.email}</p>
             )}
           </div>
 
@@ -200,7 +223,7 @@ export default function ProfileEditor() {
                 )}
               </>
             ) : (
-              <p className="font-medium">{initialProfileData.username}</p>
+              <p className="font-medium">{user?.username}</p>
             )}
           </div>
         </div>
@@ -218,17 +241,19 @@ export default function ProfileEditor() {
               />
             </>
           ) : (
-            <p className="font-medium">{initialProfileData.bio}</p>
+            <p className="font-medium">{user?.bio}</p>
           )}
         </div>
         {isEditing && (
           <div className="mt-6 flex justify-end">
             <button
               type="submit" // This button submits the form
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isDirty || Object.keys(errors).length > 0} // Disable if no changes or validation errors
+              className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                !isDirty || isSubmitting || Object.keys(errors).length > 0
+              } // Disable if no changes or validation errors
             >
-              Guardar Cambios
+              {isSubmitting ? "Guardando..." : "Guardar Cambios"}
             </button>
           </div>
         )}
