@@ -30,8 +30,7 @@ export default function LoginPage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const router = useRouter();
 
-  const setAccessToken = useAuthStore((state) => state.setAccessToken);
-  const setUser = useAuthStore((state) => state.setUser);
+  const loginUser = useAuthStore((state) => state.loginUser);
 
   const {
     register,
@@ -59,15 +58,14 @@ export default function LoginPage() {
     try {
       const response = await publicApiClient.post(
         "http://localhost:8000/api/login/",
-        data
+        data,
       );
 
-      const { access, user } = response.data;
+      const { user } = response.data;
 
-      setAccessToken(access);
-      setUser(user);
+      loginUser(user);
       //Redirige al perfil dinámico (por ID o username)
-      router.push(`/profile/${user.id}`);// usar user.username si queremos 
+      router.push(`/profile/${user.id}`); // usar user.username si queremos
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setBackendError(error.response.data.non_field_errors);
@@ -77,7 +75,7 @@ export default function LoginPage() {
       } else {
         handleAxiosError(error);
         setSubmissionError(
-          "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde."
+          "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.",
         );
         setShowErrorModal(true);
       }
@@ -93,7 +91,7 @@ export default function LoginPage() {
 
   const handleRetryConnection = () => {
     setShowErrorModal(false);
-    onSubmit(getValues());// Reintentar el envio del formulario con los valores actuales
+    onSubmit(getValues()); // Reintentar el envio del formulario con los valores actuales
   };
 
   return (
@@ -107,13 +105,16 @@ export default function LoginPage() {
             Aprende, comparte y crece junto a una comunidad que ama el
             conocimiento.
           </h3>
-          <Label className="block text-sm font-medium">Correo Electrónico</Label>
+          <Label className="block text-sm font-medium">
+            Correo Electrónico
+          </Label>
           <Input
             type="email"
             autoComplete="email"
             required
-            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.email ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${
+              errors.email ? "border-red-500" : "border-gray-300"
+            }`}
             {...register("email")}
           />
           {errors.email && (
@@ -128,8 +129,9 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             required
-            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${errors.password ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out ${
+              errors.password ? "border-red-500" : "border-gray-300"
+            }`}
             {...register("password")}
           />
           {errors.password && (
@@ -153,7 +155,7 @@ export default function LoginPage() {
         <Button
           type="submit"
           className="w-full bg-primary text-white font-bold py-2 px-4 rounded hover:bg-primary-hover mt-6 transition duration-300"
-          disabled={isSubmitting}//Deshabilitar el botón mientras se envía
+          disabled={isSubmitting} //Deshabilitar el botón mientras se envía
         >
           {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
         </Button>

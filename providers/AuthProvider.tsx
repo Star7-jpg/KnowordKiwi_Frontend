@@ -1,120 +1,114 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { setPrivateApiClientLogoutCallback } from "@/services/privateApiClient";
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
+// --- Definición de Rutas ---
 
+// Rutas que requieren que el usuario esté autenticado.
 const protectedRoutes = ["/profile", "/settings"];
+// Rutas a las que un usuario autenticado no debería acceder (será redirigido).
 const publicOnlyRoutes = [
   "/login",
   "/register",
   "/reset-password",
   "/verify-account",
 ];
+// Ruta a la que redirigir si un usuario autenticado visita una publicOnlyRoute.
+const defaultRedirect = "/profile";
 
-const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const initializeAuth = useAuthStore((state) => state.initializeAuth);
-  const clearTokens = useAuthStore((state) => state.clearTokens);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  // Esto previene mostrar páginas protegidas antes de saber si el usuario está autenticado o no.
-  const [loadingAuth, setLoadingAuth] = useState(true);
+const AuthProvider = ({ children }: AuthProviderProps) => {
+  // Obtenemos el estado y las acciones del store de Zustand.
+  const { isAuthenticated, initializeAuth, clearSession } = useAuthStore();
+  // Estado para saber si la verificación inicial de la sesión ha terminado.
+  const [loading, setLoading] = useState(true);
 
-  /**
-   * Estos dos hooks ayudan a:
-   * - saber en qué ruta estás (pathname),
-   * - redirigir a otra ruta (router.replace("/login")).
-   */
   const pathname = usePathname();
   const router = useRouter();
 
-  /**
-   * Esto se ejecuta si:
-   * - El token expiró o falló la autenticación.
-   * - Limpia los tokens del store.
-   * - Redirige a /login, solo si no estás ya en una ruta pública.
-   */
-  const redirectToLogin = useCallback(() => {
-    console.log("Redirigiendo a /login debido a falla de autenticación.");
-    clearTokens();
+  // --- Callback de Logout Global ---
+  // Esta función se llamará desde `privateApiClient` si el refresh token falla.
+  const handleLogoutAndRedirect = useCallback(() => {
+    console.log("Sesión inválida. Redirigiendo al login...");
+    clearSession();
+    // Solo redirige si no estamos ya en una página pública para evitar bucles.
     if (!publicOnlyRoutes.includes(pathname)) {
-      router.replace("/login"); // Usa replace para no guardar la página protegida en el historial
+      router.replace("/login");
     }
-  }, [clearTokens, router, pathname]);
+  }, [clearSession, router, pathname]);
 
-  /**
-   * Este efecto hace que si cualquier parte del código detecta un error de autenticación
-   * (por ejemplo, un 401 Unauthorized), ejecute redirectToLogin.
-   * También incluye una función de limpieza para evitar fugas de memoria.
-   */
+  // --- Configuración del API Client ---
+  // Conecta el callback de logout con el interceptor de Axios en el primer render.
   useEffect(() => {
-    setPrivateApiClientLogoutCallback(redirectToLogin);
+    setPrivateApiClientLogoutCallback(handleLogoutAndRedirect);
     return () => {
-      setPrivateApiClientLogoutCallback(() => {});
+      setPrivateApiClientLogoutCallback(() => {}); // Limpieza al desmontar.
     };
-  }, [redirectToLogin]); // Se ejecuta solo si redirectToLogin cambia (que no debería si es useCallback)
+  }, [handleLogoutAndRedirect]);
 
-  /**
-   * Este efecto se ejecuta una sola vez cuando cargas la app.
-   * Si el usuario no está autenticado, intenta leer los tokens del almacenamiento y validar sesión (initializeAuth).
-   * Cuando termina, pone loadingAuth en false.
-   */
+  // --- Verificación Inicial de Sesión ---
+  // Se ejecuta solo una vez al cargar la app para restaurar la sesión.
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (!isAuthenticated && loadingAuth) {
-        if (!publicOnlyRoutes.includes(pathname)) {
-          await initializeAuth();
-        }
+    const checkAuth = async () => {
+      try {
+        // Intenta inicializar la sesión (usando la cookie de refresh).
+        await initializeAuth();
+      } catch (error) {
+        console.error("Fallo en la inicialización de la autenticación", error);
+      } finally {
+        // Una vez verificado (con éxito o no), dejamos de mostrar el estado de carga.
+        setLoading(false);
       }
-      setLoadingAuth(false);
     };
+    checkAuth();
+  }, [initializeAuth]); // El array vacío asegura que se ejecute solo una vez.
 
-    checkAuthStatus();
-  }, [isAuthenticated, initializeAuth, loadingAuth, pathname]);
-
-  /**
-   * Este efecto reacciona cuando cambia la ruta o el estado de autenticación.
-    Si: 
-    Ya terminó la carga de la sesión (!loadingAuth)
-    El usuario no está autenticado (!isAuthenticated)
-    La ruta actual es protegida (protectedRoutes.includes(pathname))
-    Y no es una pública (!publicOnlyRoutes.includes(pathname))
-    👉 Entonces redirige al login.
-   */
+  // --- Lógica de Redirección ---
+  // Este es el núcleo de la protección. Se ejecuta cuando cambia la ruta o el estado de auth.
   useEffect(() => {
-    if (
-      !loadingAuth &&
-      !isAuthenticated &&
-      protectedRoutes.includes(pathname)
-    ) {
-      redirectToLogin();
-    }
-  }, [isAuthenticated, loadingAuth, pathname, redirectToLogin]);
+    // No hacemos nada mientras se verifica la sesión.
+    if (loading) return;
 
-  // Esto previene que el usuario vea por un segundo una página protegida antes de ser redirigido.
-  if (loadingAuth && protectedRoutes.includes(pathname)) {
+    const isProtectedRoute = protectedRoutes.includes(pathname);
+    const isPublicOnlyRoute = publicOnlyRoutes.includes(pathname);
+
+    // Caso 1: Usuario NO autenticado intenta acceder a una ruta protegida.
+    if (!isAuthenticated && isProtectedRoute) {
+      router.replace("/login");
+    }
+
+    // Caso 2 (Nuevo): Usuario SÍ autenticado intenta acceder a una ruta solo para públicos.
+    if (isAuthenticated && isPublicOnlyRoute) {
+      router.replace(defaultRedirect);
+    }
+  }, [loading, isAuthenticated, pathname, router]);
+
+  // --- UI de Carga ---
+  // Muestra un loader en rutas protegidas mientras se verifica la sesión.
+  // Esto evita el "parpadeo" del contenido protegido antes de la redirección.
+  if (loading && protectedRoutes.includes(pathname)) {
     return (
       <div
         style={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "100vh",
-          backgroundColor: "#f0f0f0",
+          height: "100vh",
         }}
       >
-        <p style={{ fontSize: "1.2rem", color: "#333" }}>Cargando sesión...</p>
+        <p>Verificando sesión...</p>
       </div>
     );
   }
 
-  // Renderiza los hijos si la autenticación ha terminado o si la ruta no es protegida
-  return <>{children}</>;
+  // Si no hay redirección pendiente y la carga ha finalizado, muestra el contenido.
+  return children;
 };
 
 export default AuthProvider;
