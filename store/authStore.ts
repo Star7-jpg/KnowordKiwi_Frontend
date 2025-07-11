@@ -1,102 +1,114 @@
-// Este store será utilizado para manejar la autenticación de los usuarios
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import privateApiClient from "@/services/privateApiClient";
 
 type AuthState = {
-  accessToken: string | null;
-  user: Record<string, string> | null;
+  user: User | null;
   isAuthenticated: boolean;
-  setAccessToken: (accessToken: string) => void;
-  setUser: (user: Record<string, string>) => void;
-  clearTokens: () => void; // Para cerrar sesión y limpiar los tokens
-  initializeAuth: () => Promise<void>; // Acción para la lógica de carga inicial/refresco
-  loginUser: (accessToken: string) => void; // Acción para cuando el usuario inicia sesión por primera vez
-  logoutUser: () => void;
+  setUser: (user: Partial<User> | null) => void;
+  clearSession: () => void;
+  initializeAuth: () => Promise<void>;
+  loginUser: (user: User) => void;
+  logoutUser: () => Promise<void>;
+};
+
+type User = {
+  id: string;
+  email: string;
+  username: string;
+  real_name: string;
+  avatar_url: string;
+  bio: string;
+  is_active: boolean;
+  groups: string[];
 };
 
 export const useAuthStore = create<AuthState>()(
-  devtools((set, get) => ({
-    accessToken: null,
+  devtools((set) => ({
     user: null,
     isAuthenticated: false,
 
     /**
-     * Establece el token de acceso en el store y actualiza el estado de autenticación.
-     * @param accessToken El token de acceso.
+     * Establece la información del usuario y la guarda en sessionStorage.
      */
-    setAccessToken: (accessToken) => {
-      set({ accessToken, isAuthenticated: !!accessToken });
-      if (accessToken) {
-        sessionStorage.setItem("accessToken", accessToken);
-      } else {
-        sessionStorage.removeItem("accessToken");
-      }
+    setUser: (user) =>
+      set((state) => {
+        const newUser = user ? { ...state.user, ...user } : null;
+        if (newUser) {
+          sessionStorage.setItem("user", JSON.stringify(newUser));
+        } else {
+          sessionStorage.removeItem("user");
+        }
+        return {
+          user: newUser as User | null,
+          isAuthenticated: !!newUser,
+        };
+      }),
+
+    /**
+     * Limpia el estado de autenticación y sessionStorage.
+     */
+    clearSession: () => {
+      sessionStorage.removeItem("user");
+      set({ user: null, isAuthenticated: false });
     },
 
     /**
-     * Establece la información del usuario en el store.
-     * @param user Un objeto con la información del usuario autenticado.
-     */
-    setUser: (user) => {
-      set({ user });
-    },
-
-    /**
-     * Limpia todos los tokens y la información del usuario en el store.
-     * Esto se usa para cerrar sesión o cuando el token de refresco falla.
-     */
-    clearTokens: () => {
-      set({ accessToken: null, user: null, isAuthenticated: false });
-      sessionStorage.removeItem("accessToken");
-      // El refresh_token se gestiona en una cookie HTTP-Only por el backend,
-      // así que no lo borramos aquí directamente. El logout del backend se encargará.
-    },
-
-    /**
-     * Acción para iniciar sesión del usuario después de obtener el accessToken del login.
-     * @param accessToken El token de acceso recibido del endpoint de login.
-     */
-    loginUser: (accessToken: string) => {
-      get().setAccessToken(accessToken);
-    },
-
-    /**
-     * Acción para inicializar la autenticación al cargar la aplicación.
-     * Intenta refrescar el token de acceso utilizando el refresh_token de la cookie.
+     * Inicializa la sesión al cargar la app:
+     * - Intenta refrescar el access token mediante cookie.
+     * - Restaura el usuario desde sessionStorage si está disponible.
      */
     initializeAuth: async () => {
-      const { setAccessToken, clearTokens } = get();
+      const userFromSession = sessionStorage.getItem("user");
 
-      const tokenFromSession = sessionStorage.getItem("accessToken");
-      if (tokenFromSession) {
-        setAccessToken(tokenFromSession);
-        return;
+      if (userFromSession) {
+        try {
+          const user = JSON.parse(userFromSession);
+          set({ user, isAuthenticated: true });
+          return;
+        } catch (error) {
+          console.warn("No se pudo parsear el usuario guardado:", error);
+          sessionStorage.removeItem("user");
+        }
       }
 
       try {
-        // Esta llamada usará automáticamente la cookie refresh_token si está presente y es válida
-        // en el navegador para el dominio de tu API.
-        const response = await privateApiClient.post(
+        await privateApiClient.post(
           "http://localhost:8000/api/token/refresh/",
+          {},
         );
-        const newAccessToken = response.data.access;
-        setAccessToken(newAccessToken);
-        console.log("Sesión refrescada con éxito al inicio.");
-      } catch (error: any) {
-        if (error.response?.status || error.response?.status === 401) {
-          console.log("Refresh token inválido o expirado");
-        } else {
-          console.error("Error inesperado al refrescar la sesión:", error);
-        }
-        clearTokens(); // Limpia los tokens si el refresh falla (refresh_token inválido/expirado)
+        console.log("Sesión restaurada con token refresh.");
+        // Nota: aquí podrías volver a setear el usuario si fuera necesario.
+      } catch (error) {
+        console.warn("Error al refrescar sesión con cookie:", error);
+        sessionStorage.removeItem("user");
+        set({ user: null, isAuthenticated: false });
       }
     },
+
     /**
-     * Cierra la sesión del usuario, limpiando los tokens y redirigiendo si es necesario.
+     * Guarda el usuario tras iniciar sesión (ya viene en la respuesta del backend).
      */
-    logoutUser: () => {
-      get().clearTokens();
+    loginUser: (user: User) => {
+      sessionStorage.setItem("user", JSON.stringify(user));
+      set({ user, isAuthenticated: true });
+    },
+
+    /**
+     * Cierra la sesión llamando al backend y limpiando el estado.
+     */
+    logoutUser: async () => {
+      try {
+        await privateApiClient.post(
+          "http://localhost:8000/api/logout/",
+          {},
+          { withCredentials: true },
+        );
+      } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+      }
+      sessionStorage.removeItem("user");
+      set({ user: null, isAuthenticated: false });
     },
   })),
 );
