@@ -4,7 +4,7 @@ import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   return (
-    <nav className="bg-black text-white p-4 flex items-center justify-between z-50 relative">
+    <nav className="p-4 flex items-center justify-between z-50 relative border-b border-gray-900">
       <div className="flex items-center">
         <h1 className="text-2xl font-bold mr-8">KnoWord</h1>
       </div>

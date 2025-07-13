@@ -26,13 +26,13 @@ export function ProfileMenu() {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none text-gray-900 z-50">
+        <MenuItems className="absolute right-0 mt-2 w-48 bg-bg-gray rounded-md shadow-lg py-1 ring-1 ring-gray-700 ring-opacity-5 focus:outline-none z-50">
           <MenuItem>
             {({ active }) => (
               <Link
                 href="/profile"
                 className={`block px-4 py-4 text-sm ${
-                  active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                  active ? "bg-gray-700" : "text-white"
                 }`}
               >
                 Ver perfil
@@ -44,7 +44,7 @@ export function ProfileMenu() {
               <Link
                 href="/profile/123/edit"
                 className={`block px-4 py-4 text-sm ${
-                  active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                  active ? "bg-gray-700" : "text-white"
                 }`}
               >
                 Editar perfil
@@ -56,7 +56,7 @@ export function ProfileMenu() {
               <button
                 onClick={() => console.log("Cerrar sesión")}
                 className={`block w-full text-left px-4 py-4 text-sm ${
-                  active ? "bg-red-100 text-red-700" : "text-gray-700"
+                  active ? "bg-red-400 text-red-900" : "text-white"
                 }`}
               >
                 Cerrar Sesión

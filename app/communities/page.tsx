@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const categories = [
   {
     title: "Programacion",
@@ -29,13 +31,13 @@ const categories = [
 
 export default function ExplorePage() {
   return (
-    <main className="min-h-screen text-white p-6 border-l border-gray-900">
+    <main className="min-h-screen text-white p-6">
       <h1 className="text-xl font-bold mb-6">Explorar Comunidades</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {categories.map((category, index) => (
           <div
             key={index}
-            className="bg-[#1A1A1A] rounded-lg shadow-md p-4 flex flex-col justify-between"
+            className="bg-bg-gray rounded-lg shadow-md p-4 flex flex-col justify-between"
           >
             <div className="grid grid-cols-2 gap-4 mb-4">
               {category.communities.map((community, idx) => (
@@ -47,7 +49,12 @@ export default function ExplorePage() {
                 </div>
               ))}
             </div>
-            <span className="text-sm font-semibold">{category.title}</span>
+            <Link
+              href={`/communities/${category.title.toLowerCase()}`}
+              className="text-sm font-semibold hover:underline"
+            >
+              {category.title}
+            </Link>
           </div>
         ))}
       </div>

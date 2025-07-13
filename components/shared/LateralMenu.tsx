@@ -15,7 +15,7 @@ const navigation = [
 export default function Page() {
   return (
     <div className="p-4">
-      <Menu as="nav" className="text-white">
+      <Menu as="nav">
         <ul className="flex flex-col gap-2">
           {navigation.map((item) => (
             <MenuItem key={item.name}>
@@ -26,8 +26,8 @@ export default function Page() {
                     className={clsx(
                       "inline-flex items-center gap-2 rounded-md py-2 px-4 transition-colors duration-200",
                       active
-                        ? "bg-blue-600 text-white"
-                        : "text-white hover:bg-blue-500",
+                        ? "bg-secondary text-white"
+                        : "text-white hover:bg-primary-hover",
                     )}
                   >
                     <item.icon size={20} />

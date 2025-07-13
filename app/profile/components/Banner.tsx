@@ -19,7 +19,7 @@ export function Banner() {
   };
   return (
     <div className="w-full flex flex-col">
-      <section className="w-full max-w-5xl mx-auto bg-[#1f2937] text-white mt-4 px-8 py-12 rounded-md shadow-md flex flex-col gap-y-6">
+      <section className="w-full max-w-5xl mx-auto bg-[#1f1e28] text-white mt-4 px-8 py-12 rounded-md shadow-md flex flex-col gap-y-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
           {/* Avatar + seguidores */}
           <div className="flex flex-col items-center gap-4">
