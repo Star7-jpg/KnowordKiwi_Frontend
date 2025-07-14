@@ -90,7 +90,7 @@ export default function RegisterPage() {
           setIsEmailAvailable(false);
           setError("email", {
             type: "manual",
-            message: response.data.message || "Este correo ya está en uso.",
+            message: response.data.error || "Este correo ya está en uso.",
           });
         }
       } catch (error) {
@@ -139,7 +139,7 @@ export default function RegisterPage() {
           setError("username", {
             type: "manual",
             message:
-              response.data.message || "Este nombre de usuario ya está en uso.",
+              response.data.error || "Este nombre de usuario ya está en uso.",
           });
         }
       } catch (error) {
