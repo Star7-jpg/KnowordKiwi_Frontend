@@ -88,15 +88,12 @@ export default function ProfileEditor() {
   const onSubmit = async (data: ProfileFormData) => {
     setIsSubmitting(true);
     try {
-      // Asumimos que el endpoint para actualizar es /users/me/ y usa PATCH
-      // const response = await privateApiClient.patch(`/users/me/`, data);
-
+      const response = await privateApiClient.patch("/me/", data);
+      console.log(response.data);
       // Actualizamos el estado global de Zustand con la respuesta del API
       setUser(data);
-
       setIsEditing(false); // Salir del modo edición
       openModal(); // Mostrar modal de éxito
-      console.log(user);
     } catch (error) {
       console.error("Error al actualizar el perfil:", error);
       alert(

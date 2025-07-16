@@ -41,7 +41,7 @@ privateApiClient.interceptors.response.use(
       error.response &&
       error.response.status === 401 &&
       !originalRequest._retry &&
-      originalRequest.url !== "/token/refresh"
+      originalRequest.url !== "/token/refresh/"
     ) {
       originalRequest._retry = true;
 
@@ -57,7 +57,7 @@ privateApiClient.interceptors.response.use(
 
       try {
         await privateApiClient.post(
-          "/token/refresh",
+          "/token/refresh/",
           {},
           { withCredentials: true },
         );

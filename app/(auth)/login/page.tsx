@@ -19,7 +19,6 @@ import { useAuthStore } from "@/store/authStore";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
 import publicApiClient from "@/services/publicApiClient";
-import { useRouter } from "next/navigation";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -28,7 +27,6 @@ export default function LoginPage() {
   const [backendError, setBackendError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const router = useRouter();
 
   const loginUser = useAuthStore((state) => state.loginUser);
 
@@ -56,16 +54,11 @@ export default function LoginPage() {
     setShowErrorModal(false); // Cerrar modal de error si estaba abierto
 
     try {
-      const response = await publicApiClient.post(
-        "http://localhost:8000/api/login/",
-        data,
-      );
+      const response = await publicApiClient.post("/login/", data);
 
       const { user } = response.data;
 
       loginUser(user);
-      //Redirige al perfil dinámico (por ID o username)
-      router.push(`/profile/${user.id}`); // usar user.username si queremos
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setBackendError(error.response.data.non_field_errors);
@@ -96,7 +89,7 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Fieldset className="space-y-8 bg-gray-900 rounded-lg shadow-lg max-w-lg p-8">
+      <Fieldset className="space-y-8 bg-bg-gray rounded-lg shadow-lg max-w-lg p-8">
         <Legend className="text-3xl font-bold text-center">
           Inicia sesión en tu cuenta
         </Legend>

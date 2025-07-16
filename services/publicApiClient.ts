@@ -5,6 +5,7 @@ const publicApiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Permite enviar cookies en cada solicitud
 });
 
 // Opcional: Interceptores de respuesta para manejar errores generales
