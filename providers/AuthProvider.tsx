@@ -17,7 +17,7 @@ const publicOnlyRoutes = [
   "/verify-account",
 ];
 // Ruta a la que redirigir si un usuario autenticado visita una publicOnlyRoute.
-const defaultRedirect = "/profile";
+const defaultRedirect = "/profile/me/";
 
 interface AuthProviderProps {
   children: ReactNode;
