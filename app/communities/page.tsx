@@ -29,10 +29,10 @@ const categories = [
   },
 ];
 
-export default function ExplorePage() {
+export default function ExploreCommunitiesPage() {
   return (
     <main className="min-h-screen text-white p-6">
-      <h1 className="text-xl font-bold mb-6">Explorar Comunidades</h1>
+      <h1 className="text-2xl font-bold mb-6">Explorar Comunidades</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {categories.map((category, index) => (
           <div
