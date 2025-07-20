@@ -2,6 +2,13 @@
 import { useState } from "react";
 import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { createCommunitySchema } from "../schemas";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
 
 export default function CreateCommunityPage() {
   const [tags, setTags] = useState<string[]>([]);
@@ -9,6 +16,19 @@ export default function CreateCommunityPage() {
   const [headerPreview, setHeaderPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const maxTags = 5;
+  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<CreateCommunityPageData>({
+    resolver: zodResolver(createCommunitySchema),
+    mode: "onTouched",
+  });
+
+  watch("title");
+  watch("description");
 
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -38,10 +58,24 @@ export default function CreateCommunityPage() {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   }
 
+  function submitCreateCommunityForm(data: CreateCommunityPageData) {
+    // Aquí iría la lógica para enviar los datos al backend
+    console.log("Datos de la comunidad:", data);
+    console.log("Etiquetas:", tags);
+    console.log("Cabecera:", headerPreview);
+    console.log("Avatar:", avatarPreview);
+
+    // Redirigir a la página de comunidades después de crear
+    // router.push("/communities");
+  }
+
   return (
     <div className="min-h-screen p-6">
       <h1 className="text-2xl font-bold mb-6 text-white">Crear Comunidad</h1>
-      <form className="space-y-6">
+      <form
+        className="space-y-6"
+        onSubmit={handleSubmit(submitCreateCommunityForm)}
+      >
         {/* Información de la comunidad */}
         <Fieldset className="bg-bg-gray rounded-lg shadow-md p-6 w-5/6 mx-auto">
           <Legend className="text-lg font-semibold text-white mb-1">
@@ -59,8 +93,12 @@ export default function CreateCommunityPage() {
             <Input
               type="text"
               placeholder="Ej. Matemáticas y física"
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600"
+              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600 ${errors.title ? "border-text-error focus:border-text-error focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}`}
+              {...register("title")}
             />
+            {errors.title && (
+              <p className="text-error text-sm mt-1">{errors.title.message}</p>
+            )}
           </Field>
 
           <Field>
@@ -70,8 +108,14 @@ export default function CreateCommunityPage() {
             <Input
               type="text"
               placeholder="Ej. Un lugar para discutir y aprender sobre matemáticas y física."
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600"
+              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600 ${errors.description ? "border-text-error focus:border-text-error focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}`}
+              {...register("description")}
             />
+            {errors.description && (
+              <p className="text-error text-sm mt-1">
+                {errors.description.message}
+              </p>
+            )}
           </Field>
         </Fieldset>
 
@@ -191,6 +235,23 @@ export default function CreateCommunityPage() {
             </label>
           </div>
         </Fieldset>
+        {/* Botón de creación */}
+        <div className="flex mt-6 justify-center">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-primary text-color-text font-bold rounded hover:bg-primary-hover transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!isValid || tags.length < 3}
+          >
+            Crear comunidad
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/communities")}
+            className="px-4 py-2 bg-gray-600 text-color-text font-bold rounded hover:bg-gray-700 transition duration-300 ml-4"
+          >
+            Cancelar
+          </button>
+        </div>
       </form>
     </div>
   );
