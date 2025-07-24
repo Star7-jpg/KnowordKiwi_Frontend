@@ -1,6 +1,18 @@
 "use client";
 import { useState } from "react";
-import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Description,
+  Transition,
+  TransitionChild,
+  Field,
+  Fieldset,
+  Input,
+  Label,
+  Legend,
+} from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -15,6 +27,7 @@ export default function CreateCommunityPage() {
   const [inputValue, setInputValue] = useState("");
   const [headerPreview, setHeaderPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const maxTags = 5;
   const router = useRouter();
   const {
@@ -59,11 +72,14 @@ export default function CreateCommunityPage() {
   }
 
   function submitCreateCommunityForm(data: CreateCommunityPageData) {
-    // Aquí iría la lógica para enviar los datos al backend
-    console.log("Datos de la comunidad:", data);
-    console.log("Etiquetas:", tags);
-    console.log("Cabecera:", headerPreview);
-    console.log("Avatar:", avatarPreview);
+    const formData = {
+      ...data,
+      tags,
+      header: headerPreview,
+      avatar: avatarPreview,
+    };
+    console.log("Datos del formulario:", formData);
+    setIsSubmitCorrect(true);
 
     // Redirigir a la página de comunidades después de crear
     // router.push("/communities");
@@ -253,6 +269,63 @@ export default function CreateCommunityPage() {
           </button>
         </div>
       </form>
+      <Transition show={isSubmitCorrect}>
+        <Dialog
+          onClose={() => setIsSubmitCorrect(false)}
+          className="relative z-50"
+        >
+          {/* Fondo oscuro (backdrop) */}
+          <TransitionChild
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+          </TransitionChild>
+
+          {/* Contenedor del modal centrado */}
+          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+            <TransitionChild
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <DialogPanel className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm mx-auto text-white">
+                <div className="flex flex-col items-center">
+                  <DialogTitle className="text-2xl font-bold text-terciary mb-4 text-center">
+                    Comunidad Creada
+                  </DialogTitle>
+
+                  <Description className="text-md text-gray-200 mb-6 text-center">
+                    Tu comunidad se ha creado con éxito. Comparte tu
+                    conocimiento con el mundo.
+                  </Description>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setIsSubmitCorrect(false)}
+                      className="px-4 py-2 bg-primary rounded hover:bg-primary-hover text-white"
+                    >
+                      OK, lo he entendido
+                    </button>
+                    <button
+                      onClick={() => router.push("/communities")}
+                      className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
+                    >
+                      Muestrame mi comunidad
+                    </button>
+                  </div>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 }
