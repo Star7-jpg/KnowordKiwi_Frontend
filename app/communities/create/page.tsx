@@ -19,6 +19,7 @@ import { z } from "zod";
 import { createCommunitySchema } from "../schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import privateApiClient from "@/services/privateApiClient";
 
 type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
 
@@ -28,6 +29,7 @@ export default function CreateCommunityPage() {
   const [headerPreview, setHeaderPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const maxTags = 5;
   const router = useRouter();
   const {
@@ -71,7 +73,7 @@ export default function CreateCommunityPage() {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   }
 
-  function submitCreateCommunityForm(data: CreateCommunityPageData) {
+  async function submitCreateCommunityForm(data: CreateCommunityPageData) {
     const formData = {
       ...data,
       tags,
@@ -79,7 +81,17 @@ export default function CreateCommunityPage() {
       avatar: avatarPreview,
     };
     console.log("Datos del formulario:", formData);
-    setIsSubmitCorrect(true);
+    try {
+      const response = await privateApiClient.post("/communities/", formData);
+      console.log("Comunidad creada:", response.data);
+      setIsSubmitCorrect(true);
+    } catch (error) {
+      console.error("Error al crear la comunidad:", error);
+      setSubmissionError(
+        "Error al crear la comunidad. Por favor, inténtalo de nuevo.",
+      );
+      return;
+    }
 
     // Redirigir a la página de comunidades después de crear
     // router.push("/communities");
@@ -109,11 +121,11 @@ export default function CreateCommunityPage() {
             <Input
               type="text"
               placeholder="Ej. Matemáticas y física"
-              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600 ${errors.title ? "border-text-error focus:border-text-error focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}`}
-              {...register("title")}
+              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600 ${errors.name ? "border-text-error focus:border-text-error focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}`}
+              {...register("name")}
             />
-            {errors.title && (
-              <p className="text-error text-sm mt-1">{errors.title.message}</p>
+            {errors.name && (
+              <p className="text-error text-sm mt-1">{errors.name.message}</p>
             )}
           </Field>
 
@@ -318,6 +330,62 @@ export default function CreateCommunityPage() {
                       className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
                     >
                       Muestrame mi comunidad
+                    </button>
+                  </div>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </Dialog>
+      </Transition>
+      <Transition show={submissionError}>
+        <Dialog
+          onClose={() => setIsSubmitCorrect(false)}
+          className="relative z-50"
+        >
+          {/* Fondo oscuro (backdrop) */}
+          <TransitionChild
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+          </TransitionChild>
+
+          {/* Contenedor del modal centrado */}
+          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+            <TransitionChild
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <DialogPanel className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm mx-auto text-white">
+                <div className="flex flex-col items-center">
+                  <DialogTitle className="text-2xl font-bold text-secondary mb-4 text-center">
+                    Ha ocurrido un error al crear la comunidad.
+                  </DialogTitle>
+
+                  <Description className="text-md text-gray-200 mb-6 text-center">
+                    Por favor, intenta nuevamente.
+                  </Description>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setSubmissionError(null)}
+                      className="px-4 py-2 bg-primary rounded hover:bg-primary-hover text-white"
+                    >
+                      Reintentar
+                    </button>
+                    <button
+                      onClick={() => router.push("/communities")}
+                      className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
+                    >
+                      Ir a comunidades
                     </button>
                   </div>
                 </div>

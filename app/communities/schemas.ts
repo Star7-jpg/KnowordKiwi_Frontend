@@ -1,8 +1,8 @@
-import {z} from "zod";
+import { z } from "zod";
 
 // Este esquema define las reglas de validación para el formulario de creación de comunidad
 export const createCommunitySchema = z.object({
-  title: z
+  name: z
     .string()
     .min(3, "El título debe tener al menos 3 caracteres.")
     .max(50, "El título no puede tener más de 50 caracteres."),
