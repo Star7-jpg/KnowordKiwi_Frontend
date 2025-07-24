@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
 import { debounce } from "lodash";
+import { Eye, EyeOff } from "lucide-react";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -29,6 +30,7 @@ export default function RegisterPage() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { handleAxiosError } = useAxiosErrorHandler();
 
   //Estados para validacion asíncrona
@@ -60,7 +62,7 @@ export default function RegisterPage() {
   const password = watch("password");
   const username = watch("username");
   const realName = watch("realName");
-  const bio = watch("bio");
+  watch("bio");
 
   // Validar solo los campos del paso actual
   const stepFields: Record<number, (keyof RegisterFormData)[]> = {
@@ -269,7 +271,6 @@ export default function RegisterPage() {
                   type="email"
                   id="email"
                   autoComplete="email"
-                  value={email}
                   className={`
                     mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm transition duration-150 ease-in-out
                     ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}
@@ -296,13 +297,27 @@ export default function RegisterPage() {
                 <Label htmlFor="password" className="block text-sm font-medium">
                   Contraseña
                 </Label>
-                <Input
-                  type="password"
-                  id="password"
-                  value={password}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
-                  {...register("password")}
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out pr-10"
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+                    onMouseDown={() => setShowPassword(true)}
+                    onMouseUp={() => setShowPassword(false)}
+                    onMouseLeave={() => setShowPassword(false)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-red-500 font-light text-sm mt-2">
                     {errors.password.message}
@@ -345,7 +360,6 @@ export default function RegisterPage() {
                     mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm transition duration-150 ease-in-out
                     ${errors.username ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-secondary focus:border-secondary"}
                   `}
-                  value={username}
                   {...register("username")}
                 />
                 {/* Mostrar VERDE solo si no hay errores (ni de Zod ni manuales) y está disponible */}
@@ -372,7 +386,6 @@ export default function RegisterPage() {
                   type="text"
                   id="realName"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
-                  value={realName}
                   {...register("realName")}
                 />
                 {errors.realName && (
@@ -464,7 +477,6 @@ export default function RegisterPage() {
                   id="bio"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary sm:text-sm transition duration-150 ease-in-out"
                   rows={3}
-                  value={bio}
                   {...register("bio")}
                 />
                 {errors.bio && (

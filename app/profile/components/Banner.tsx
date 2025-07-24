@@ -5,10 +5,13 @@ import { useState } from "react";
 import Posts from "./Posts";
 import Communities from "./Communities";
 import Followers from "./Followers";
+import { useAuthStore } from "@/store/authStore";
 
 type ActiveTab = "posts" | "communities" | "followers";
 
 export function Banner() {
+  const user = useAuthStore((state) => state.user);
+  const { bio, real_name, username, avatar_url } = user || {};
   const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
   const getButtonClasses = (tab: ActiveTab) => {
     const baseClasses = "px-4 py-2 transition-colors duration-300 outline-none";
@@ -20,7 +23,7 @@ export function Banner() {
   return (
     <div className="w-full flex flex-col">
       <section className="w-full max-w-5xl mx-auto bg-[#1f1e28] text-white mt-4 px-8 py-12 rounded-md shadow-md flex flex-col gap-y-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-around gap-8">
           {/* Avatar + seguidores */}
           <div className="flex flex-col items-center gap-4">
             <Avatar src="/default-avatar.jpeg" size="lg" />
@@ -41,20 +44,13 @@ export function Banner() {
           <div className="space-y-4 max-w-2xl text-center md:text-left">
             <div className="space-y-1">
               <h1 className="text-3xl sm:text-4xl font-bold leading-snug">
-                Nombre de usuario
+                {username}
               </h1>
-              <p className="text-base text-gray-300">Nivel: Universitario</p>
+              <p className="text-base text-gray-300">{real_name}</p>
             </div>
 
             <div className="text-sm text-gray-400 leading-relaxed space-y-2">
-              <p>
-                Somos un equipo de diseño y desarrolladores que buscan ayudarte
-                en tus procesos de aprendizaje. Con nosotros podrás crear
-                cursos, unirte a comunidades, compartir tus conocimientos y
-                mucho más. Además, podrás tener tu propio perfil donde compartir
-                tus habilidades. ¡Es tu momento de unirte a nuestra plataforma y
-                comenzar a aprender y enseñar!
-              </p>
+              <p>{bio}</p>
             </div>
           </div>
         </div>

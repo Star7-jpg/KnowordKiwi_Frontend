@@ -30,7 +30,7 @@ export function ProfileMenu() {
           <MenuItem>
             {({ active }) => (
               <Link
-                href="/profile"
+                href="/profile/me"
                 className={`block px-4 py-4 text-sm ${
                   active ? "bg-gray-700" : "text-white"
                 }`}
