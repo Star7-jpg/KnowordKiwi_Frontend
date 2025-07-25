@@ -30,6 +30,7 @@ export default function CreateCommunityPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const maxTags = 5;
   const router = useRouter();
   const {
@@ -42,7 +43,7 @@ export default function CreateCommunityPage() {
     mode: "onTouched",
   });
 
-  watch("title");
+  watch("name");
   watch("description");
 
   const handleImageChange = (
@@ -92,9 +93,6 @@ export default function CreateCommunityPage() {
       );
       return;
     }
-
-    // Redirigir a la página de comunidades después de crear
-    // router.push("/communities");
   }
 
   return (
@@ -269,8 +267,11 @@ export default function CreateCommunityPage() {
             type="submit"
             className="px-4 py-2 bg-primary text-color-text font-bold rounded hover:bg-primary-hover transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!isValid || tags.length < 3}
+            onClick={() => {
+              setIsSubmitting(true);
+            }}
           >
-            Crear comunidad
+            {isSubmitting ? "Creando..." : "Crear Comunidad"}
           </button>
           <button
             type="button"
@@ -338,7 +339,7 @@ export default function CreateCommunityPage() {
           </div>
         </Dialog>
       </Transition>
-      <Transition show={submissionError}>
+      <Transition show={!!submissionError}>
         <Dialog
           onClose={() => setIsSubmitCorrect(false)}
           className="relative z-50"
@@ -376,7 +377,10 @@ export default function CreateCommunityPage() {
                   </Description>
                   <div className="flex gap-4">
                     <button
-                      onClick={() => setSubmissionError(null)}
+                      onClick={() => {
+                        setSubmissionError(null);
+                        setIsSubmitting(false);
+                      }}
                       className="px-4 py-2 bg-primary rounded hover:bg-primary-hover text-white"
                     >
                       Reintentar

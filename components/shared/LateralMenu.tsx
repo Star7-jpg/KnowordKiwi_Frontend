@@ -7,7 +7,7 @@ import clsx from "clsx";
 const navigation = [
   { name: "Inicio", href: "#", icon: Home },
   { name: "Explorar", href: "#", icon: Compass },
-  { name: "Comunidades", href: "#", icon: Users },
+  { name: "Comunidades", href: "/communities", icon: Users },
   { name: "Cursos", href: "#", icon: Bookmark },
   { name: "Configuración", href: "#", icon: Settings },
 ];
