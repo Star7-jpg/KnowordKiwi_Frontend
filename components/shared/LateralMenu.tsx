@@ -17,7 +17,7 @@ const navigation = [
   { name: "Explorar", href: "#", icon: Compass },
   {
     name: "Comunidades",
-    href: "/communities",
+    href: "/communities/explore",
     icon: Users,
     submenu: true,
   },
@@ -26,7 +26,7 @@ const navigation = [
 ];
 
 const communitySubmenu = [
-  { name: "Explorar Comunidades", href: "/communities" },
+  { name: "Explorar Comunidades", href: "/communities/explore" },
   { name: "Mis Comunidades", href: "/communities/my" },
   { name: "Comunidades a las que pertenezco", href: "/communities/member" },
 ];
