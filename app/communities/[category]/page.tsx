@@ -26,7 +26,7 @@ async function getCommunitiesByCategory(
 ): Promise<Community[]> {
   try {
     // Asumiendo que tu backend tiene un endpoint para obtener comunidades por categoría
-    const response = await privateApiClient(`communities/tag/${category}`);
+    const response = await privateApiClient(`communities/tag/${category}/`);
     return await response.data;
   } catch (error) {
     console.error("Error fetching communities:", error);

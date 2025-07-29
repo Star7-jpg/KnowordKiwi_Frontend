@@ -1,0 +1,288 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Users, Calendar, Tag, Lock, Globe } from "lucide-react";
+import privateApiClient from "@/services/privateApiClient";
+import { useParams } from "next/navigation";
+
+type ReadTag = {
+  id: string;
+  name: string;
+};
+
+type Community = {
+  id: string;
+  name: string;
+  description: string;
+  avatar_url: string | null;
+  banner_url: string | null;
+  is_private: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  read_tags: ReadTag[];
+};
+
+async function getCommunityById(communityId: string): Promise<Community> {
+  try {
+    const response = await privateApiClient.get(`communities/${communityId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching community:", error);
+    throw error;
+  }
+}
+
+export default function CommunityDetail() {
+  const params = useParams();
+  const communityId = params.idCommunity as string;
+
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!communityId) {
+      setError("ID de comunidad no proporcionado.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchCommunity = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getCommunityById(communityId);
+        setCommunity(data);
+      } catch (err) {
+        setError("No se pudo cargar la comunidad. Inténtalo más tarde.");
+        console.error("Error fetching community:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommunity();
+  }, [communityId]);
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded max-w-4xl mx-auto mt-8">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg
+              className="h-5 w-5 text-red-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!community) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+          No se encontró la comunidad
+        </h3>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Banner de la comunidad */}
+      <div className="relative h-64 rounded-t-xl overflow-hidden">
+        {community.banner_url ? (
+          <img
+            src={community.banner_url.trim()}
+            alt={`Banner de ${community.name}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.parentElement!.innerHTML = `
+                <div class="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                  <span class="text-white text-2xl font-bold">${community.name}</span>
+                </div>
+              `;
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <span className="text-white text-2xl font-bold">
+              {community.name}
+            </span>
+          </div>
+        )}
+
+        {/* Avatar de la comunidad */}
+        <div className="absolute bottom-0 left-8 transform translate-y-1/2">
+          {community.avatar_url ? (
+            <img
+              src={community.avatar_url.trim()}
+              alt={community.name}
+              className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 object-cover shadow-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 bg-gray-200 flex items-center justify-center shadow-lg z-10">
+              <span className="text-3xl font-bold text-gray-600">
+                {community.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="bg-bg-gray rounded-b-xl shadow-lg pb-8">
+        {/* Información principal de la comunidad */}
+        <div className="pt-16 px-8">
+          <div className="flex flex-wrap justify-between items-start gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {community.name}
+                </h1>
+                {community.is_private ? (
+                  <Lock className="w-5 h-5 text-yellow-500" />
+                ) : (
+                  <Globe className="w-5 h-5 text-blue-500" />
+                )}
+              </div>
+
+              <p className="text-gray-600 dark:text-gray-300 max-w-3xl">
+                {community.description}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Unirse
+              </button>
+              <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Compartir
+              </button>
+            </div>
+          </div>
+
+          {/* Etiquetas */}
+          <div className="flex flex-wrap gap-2 mt-6">
+            {community.read_tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+              >
+                <Tag className="w-4 h-4 mr-1" />
+                {tag.name}
+              </span>
+            ))}
+          </div>
+
+          {/* Información adicional */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Creada
+                </p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {formatDate(community.created_at)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <Users className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Miembros
+                </p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  0 miembros
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Creador
+                </p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Usuario
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-bg-gray rounded-xl shadow-lg pb-8">
+        {/* Secciones futuras */}
+        <div className="mt-12 px-8">
+          <div className="border-b border-gray-700 py-2">
+            <nav className="flex space-x-8 justify-around">
+              <button className="py-4 px-1  border-terciary text-terciary font-medium text-sm">
+                Publicaciones
+              </button>
+              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
+                Encuestas
+              </button>
+              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
+                Miembros
+              </button>
+            </nav>
+          </div>
+
+          <div className="py-8 text-center">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-12 inline-block">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Próximamente
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Aquí se mostrarán las publicaciones de la comunidad
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
