@@ -22,6 +22,9 @@ type Community = {
   updated_at: string;
   deleted_at: string | null;
   read_tags: ReadTag[];
+  is_member: boolean;
+  is_owner: boolean;
+  can_edit: boolean;
 };
 
 async function getCommunityById(communityId: string): Promise<Community> {
@@ -188,15 +191,6 @@ export default function CommunityDetail() {
                 {community.description}
               </p>
             </div>
-
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Unirse
-              </button>
-              <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                Compartir
-              </button>
-            </div>
           </div>
 
           {/* Etiquetas */}
@@ -210,6 +204,46 @@ export default function CommunityDetail() {
                 {tag.name}
               </span>
             ))}
+          </div>
+
+          {community.is_owner && (
+            <p className="text-terciary italic mt-8">
+              ¡Eres dueño de esta comunidad! Puedes editar su información o
+              incluso eliminarla.
+            </p>
+          )}
+
+          <div className="flex gap-3 flex-wrap mt-4">
+            {/* Botón de Unirse: solo si no es miembro ni dueño */}
+            {!community.is_owner && !community.is_member && (
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Unirse
+              </button>
+            )}
+
+            {/* Botón de Salir: si es miembro pero no dueño */}
+            {!community.is_owner && community.is_member && (
+              <button className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                Salir
+              </button>
+            )}
+
+            {/* Acciones del dueño */}
+            {community.is_owner && (
+              <>
+                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors">
+                  Editar
+                </button>
+                <button className="px-4 py-2 bg-text-error text-white rounded-lg hover:bg-red-700 transition-colors">
+                  Eliminar
+                </button>
+              </>
+            )}
+
+            {/* Botón de compartir siempre visible */}
+            <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              Compartir
+            </button>
           </div>
 
           {/* Información adicional */}
