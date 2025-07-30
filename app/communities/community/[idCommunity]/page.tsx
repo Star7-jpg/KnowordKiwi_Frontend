@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Users, Calendar, Tag, Lock, Globe } from "lucide-react";
 import privateApiClient from "@/services/privateApiClient";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 type ReadTag = {
   id: string;
@@ -231,9 +232,12 @@ export default function CommunityDetail() {
             {/* Acciones del dueño */}
             {community.is_owner && (
               <>
-                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors">
+                <Link
+                  href={`/communities/community/${community.id}/editar`}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                >
                   Editar
-                </button>
+                </Link>
                 <button className="px-4 py-2 bg-text-error text-white rounded-lg hover:bg-red-700 transition-colors">
                   Eliminar
                 </button>

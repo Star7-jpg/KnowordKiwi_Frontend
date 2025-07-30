@@ -71,27 +71,44 @@ function UserCommunitiesList() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg
-              className="h-5 w-5 text-red-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
+      <main className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-bg-default rounded-xl border border-terciary shadow-lg p-6 text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="bg-red-100 p-3 rounded-full">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
           </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
+
+          <h2 className="text-2xl font-bold text-gray-200">
+            ¡Ups! Algo salió mal
+          </h2>
+          <p className="text-gray-400">
+            No pudimos conectar con el servidor. ¡Pero no te preocupes! Estamos
+            trabajando para solucionarlo.
+          </p>
+          <p className="text-sm text-error font-medium">{error}</p>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition"
+          >
+            Reintentar
+          </button>
         </div>
-      </div>
+      </main>
     );
   }
 
