@@ -30,3 +30,30 @@ body {
   color: var(--white);
   font-family: --font-sans, sans-serif;
 }
+
+@keyframes rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-rainbow-bg {
+  background: linear-gradient(
+    90deg,
+    #ff0000,
+    #ff7700,
+    #ffff00,
+    #00ff00,
+    #0080ff,
+    #8b00ff,
+    #ff0080
+  );
+  background-size: 300% 300%;
+  animation: rainbow 6s ease infinite;
+}

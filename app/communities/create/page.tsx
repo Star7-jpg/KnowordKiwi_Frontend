@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogPanel,
@@ -20,14 +20,21 @@ import { createCommunitySchema } from "../schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import privateApiClient from "@/services/privateApiClient";
+import debounce from "lodash/debounce";
 
 type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
 
+type TagsResponse = {
+  name: string;
+};
+
 export default function CreateCommunityPage() {
-  const [tags, setTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [headerPreview, setHeaderPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,28 +63,70 @@ export default function CreateCommunityPage() {
       setPreview(url);
     }
   };
+
+  const fetchTagSuggestions = useCallback(
+    debounce(async (query: string) => {
+      if (query.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const response = await privateApiClient.get<TagsResponse[]>(
+          `/communities/tags/suggestions?q=${query}`,
+        );
+        console.log(response);
+        const newSuggestions = response.data
+          .filter((s) => !selectedTags.includes(s.name.toLowerCase()))
+          .map((s) => s.name);
+        setSuggestions(newSuggestions);
+      } catch (error) {
+        console.error("Error fetching tag suggestions:", error);
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    [selectedTags],
+  );
+
+  useEffect(() => {
+    fetchTagSuggestions(inputValue);
+    return () => {
+      fetchTagSuggestions.cancel();
+    };
+  }, [inputValue, fetchTagSuggestions]);
+
+  const handleAddTag = (tag: string) => {
+    const newTag = tag.trim().toLowerCase();
+    if (
+      newTag &&
+      !selectedTags.includes(newTag) &&
+      selectedTags.length < maxTags
+    ) {
+      setSelectedTags((prev) => [...prev, newTag]);
+      setInputValue("");
+      setSuggestions([]);
+    } else if (selectedTags.includes(newTag)) {
+      alert("Esta etiqueta ya ha sido agregada.");
+    }
+  };
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && inputValue.trim() !== "") {
       e.preventDefault();
-      const newTag = inputValue.trim().toLowerCase();
-      if (tags.includes(newTag)) {
-        alert("Esta etiqueta ya ha sido agregada.");
-        return;
-      }
-      if (tags.length >= maxTags) return;
-      setTags((prev) => [...prev, newTag]);
-      setInputValue("");
+      handleAddTag(inputValue);
     }
   }
 
   function handleTagRemove(tagToRemove: string) {
-    setTags((prev) => prev.filter((t) => t !== tagToRemove));
+    setSelectedTags((prev) => prev.filter((t) => t !== tagToRemove));
   }
 
   async function submitCreateCommunityForm(data: CreateCommunityPageData) {
     const formData = {
       ...data,
-      tags,
+      tags: selectedTags,
       header: headerPreview,
       avatar: avatarPreview,
     };
@@ -156,16 +205,17 @@ export default function CreateCommunityPage() {
           </p>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {tags.map((tag) => (
+            {selectedTags.map((tag) => (
               <span
                 key={tag}
-                className="bg-gray-800 text-white px-3 py-1 rounded-full flex items-center text-sm"
+                className="animate-rainbow-bg text-white px-6 py-3 rounded-md flex items-center text-lg font-semibold shadow-lg transition-transform duration-200 hover:scale-105"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => handleTagRemove(tag)}
-                  className="ml-2 text-red-400 hover:text-red-600"
+                  className="ml-3 text-red-300 hover:text-red-100 text-2xl font-bold focus:outline-none"
+                  aria-label={`Remove ${tag}`}
                 >
                   &times;
                 </button>
@@ -173,18 +223,40 @@ export default function CreateCommunityPage() {
             ))}
           </div>
 
-          {tags.length < maxTags && (
-            <Input
-              type="text"
-              placeholder="Ej. programación"
-              className="w-50 border border-gray-600 rounded px-3 py-2 text-sm bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
+          {selectedTags.length < maxTags && (
+            <div>
+              <Input
+                type="text"
+                placeholder="Ej. programación"
+                className="w-50 border border-gray-600 rounded px-3 py-2 text-sm bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              {isSearching && (
+                <p className="text-sm text-gray-400 italic flex items-center gap-2 mt-2">
+                  <span className="animate-pulse">🔍</span>
+                  Buscando...
+                </p>
+              )}
+              {suggestions.length > 0 && !isSearching && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {suggestions.slice(0, 5).map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleAddTag(suggestion)}
+                      className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-gray-100 text-sm font-medium rounded-full transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                    >
+                      + {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
-          {tags.length >= maxTags && (
+          {selectedTags.length >= maxTags && (
             <p className="text-sm text-gray-400 mt-2">
               Has agregado el máximo de {maxTags} etiquetas.
             </p>
@@ -266,7 +338,7 @@ export default function CreateCommunityPage() {
           <button
             type="submit"
             className="px-4 py-2 bg-primary text-color-text font-bold rounded hover:bg-primary-hover transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!isValid || tags.length < 3}
+            disabled={!isValid || selectedTags.length < 3}
             onClick={() => {
               setIsSubmitting(true);
             }}

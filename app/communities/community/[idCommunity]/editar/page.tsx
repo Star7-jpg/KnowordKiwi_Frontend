@@ -54,7 +54,7 @@ export default function CommunityEditForm() {
     register,
     handleSubmit,
     setValue,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<FormData>({
     resolver: zodResolver(createCommunitySchema),
     mode: "onBlur", // Valida al salir del campo
@@ -319,7 +319,7 @@ export default function CommunityEditForm() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !isValid}
             className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? "Guardando..." : "Guardar cambios"}
