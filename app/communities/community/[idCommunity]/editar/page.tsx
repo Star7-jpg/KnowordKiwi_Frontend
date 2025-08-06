@@ -1,18 +1,29 @@
 "use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCommunitySchema } from "@/app/communities/schemas";
 import privateApiClient from "@/services/privateApiClient";
+import debounce from "lodash/debounce";
+import {
+  Dialog,
+  Field,
+  Fieldset,
+  Input,
+  Label,
+  Legend,
+} from "@headlessui/react";
+import { ImageIcon } from "lucide-react";
 
 type ReadTag = {
   id: string;
   name: string;
 };
-
+type TagsResponse = {
+  name: string;
+};
 type Community = {
   id: string;
   name: string;
@@ -26,30 +37,22 @@ type Community = {
   deleted_at: string | null;
   read_tags: ReadTag[];
 };
-
 type FormData = z.infer<typeof createCommunitySchema>;
 
 export default function CommunityEditForm() {
   const params = useParams();
   const router = useRouter();
   const communityId = params.idCommunity as string;
-
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [availableTags] = useState<string[]>([
-    "C++",
-    "Programación",
-    "Desarrollo",
-    "Algoritmos",
-    "Estructuras de datos",
-    "c++ en espanol",
-  ]);
+  const [inputValue, setInputValue] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
+  const maxTags = 5;
 
-  // === React Hook Form ===
   const {
     register,
     handleSubmit,
@@ -57,7 +60,7 @@ export default function CommunityEditForm() {
     formState: { errors, isValid },
   } = useForm<FormData>({
     resolver: zodResolver(createCommunitySchema),
-    mode: "onBlur", // Valida al salir del campo
+    mode: "onBlur",
   });
 
   // Cargar datos iniciales
@@ -69,13 +72,9 @@ export default function CommunityEditForm() {
         );
         const data = response.data;
         setCommunity(data);
-
-        // Establecer valores en el formulario
         setValue("name", data.name);
         setValue("description", data.description);
-
-        // Establecer tags
-        setSelectedTags(data.read_tags.map((tag) => tag.name));
+        setSelectedTags(data.read_tags.map((tag) => tag.name.toLowerCase()));
       } catch (err) {
         setError("No se pudo cargar la comunidad.");
         console.error(err);
@@ -83,22 +82,18 @@ export default function CommunityEditForm() {
         setLoading(false);
       }
     };
-
     if (communityId) fetchCommunity();
   }, [communityId, setValue]);
 
-  // Manejar envío del formulario
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     setError(null);
-
     const payload = {
       id: communityId,
       name: data.name,
       description: data.description,
       tags: selectedTags,
     };
-
     try {
       await privateApiClient.patch(`/communities/${communityId}/`, payload);
       router.push(`/communities/community/${communityId}`);
@@ -111,24 +106,64 @@ export default function CommunityEditForm() {
     }
   };
 
-  // Manejar adición de tag
   const handleAddTag = (tag: string) => {
-    if (tag && !selectedTags.includes(tag)) {
-      setSelectedTags([...selectedTags, tag]);
+    const newTag = tag.trim().toLowerCase();
+    if (!newTag) return;
+    if (selectedTags.includes(newTag)) {
+      alert("Esta etiqueta ya ha sido agregada.");
+      return;
     }
+    if (selectedTags.length >= maxTags) {
+      alert(`Solo puedes agregar hasta ${maxTags} etiquetas.`);
+      return;
+    }
+    setSelectedTags((prev) => [...prev, newTag]);
+    setInputValue("");
+    setSuggestions([]);
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setSelectedTags(selectedTags.filter((tag) => tag !== tagToRemove));
+    setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
   const handleNewTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const value = (e.target as HTMLInputElement).value.trim();
-    if (e.key === "Enter" && value) {
-      handleAddTag(value);
-      (e.target as HTMLInputElement).value = "";
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag(inputValue);
     }
   };
+
+  const fetchTagSuggestions = useCallback(
+    debounce(async (query: string) => {
+      if (query.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const response = await privateApiClient.get<TagsResponse[]>(
+          `/communities/tags/suggestions?q=${query}`,
+        );
+        const newSuggestions = response.data
+          .filter((s) => !selectedTags.includes(s.name.toLowerCase()))
+          .map((s) => s.name);
+        setSuggestions(newSuggestions);
+      } catch (err) {
+        console.error(err);
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    [selectedTags],
+  );
+
+  useEffect(() => {
+    fetchTagSuggestions(inputValue);
+    return () => {
+      fetchTagSuggestions.cancel();
+    };
+  }, [inputValue, fetchTagSuggestions]);
 
   if (loading) {
     return (
@@ -141,12 +176,12 @@ export default function CommunityEditForm() {
   if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-bg-default rounded-xl border border-terciary shadow-lg p-6 text-center space-y-4">
+        <div className="max-w-md w-full bg-gray-800 rounded-xl border border-gray-600 shadow-lg p-6 text-center space-y-4">
           <div className="flex justify-center">
-            <div className="bg-red-100 p-3 rounded-full">
+            <div className="bg-red-900 p-3 rounded-full">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-red-500"
+                className="h-12 w-12 text-red-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -160,12 +195,12 @@ export default function CommunityEditForm() {
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-200">
+          <h2 className="text-2xl font-bold text-white">
             ¡Ups! Algo salió mal
           </h2>
           <p className="text-gray-400">
-            No pudimos conectar con el servidor. ¡Pero no te preocupes! Estamos
-            trabajando para solucionarlo.
+            No pudimos conectar con el servidor. Estamos trabajando para
+            solucionarlo.
           </p>
           <p className="text-sm text-error font-medium">{error}</p>
           <button
@@ -180,147 +215,143 @@ export default function CommunityEditForm() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto bg-bg-gray rounded-xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Editar Comunidad
-      </h2>
+    <div className="min-h-screen p-6 text-white">
+      <h1 className="text-2xl font-bold mb-6">Editar Comunidad</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Nombre */}
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Nombre de la comunidad
-          </label>
-          <input
-            type="text"
-            id="name"
-            {...register("name")}
-            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
-              errors.name ? "border-text-error" : "border-gray-300"
-            }`}
-            placeholder="Ej. Comunidad C++"
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-text-error">
-              {errors.name.message}
-            </p>
-          )}
-        </div>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6 max-w-3xl mx-auto"
+      >
+        {/* Información de la comunidad */}
+        <Fieldset className="bg-bg-gray rounded-lg shadow-md p-6">
+          <Legend className="text-lg font-semibold text-white mb-1">
+            Información de la comunidad
+          </Legend>
+          <p className="text-sm text-gray-400 mb-6">
+            Actualiza el nombre y descripción de tu comunidad.
+          </p>
 
-        {/* Descripción */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Descripción
-          </label>
-          <textarea
-            id="description"
-            {...register("description")}
-            rows={4}
-            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
-              errors.description
-                ? "border-text-error"
-                : "border-gray-300 dark:border-gray-600"
-            }`}
-            placeholder="Describe de qué trata la comunidad..."
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-text-error">
-              {errors.description.message}
-            </p>
-          )}
-        </div>
+          <Field className="mb-6">
+            <Label className="block text-sm font-medium mb-1 text-white">
+              Título de la comunidad
+            </Label>
+            <Input
+              type="text"
+              placeholder="Ej. Matemáticas y física"
+              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary ${
+                errors.name
+                  ? "focus:ring-red-500 border border-red-500"
+                  : "focus:ring-primary"
+              }`}
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-error text-sm mt-1">{errors.name.message}</p>
+            )}
+          </Field>
+
+          <Field>
+            <Label className="block text-sm font-medium mb-1 text-white">
+              Descripción de la comunidad
+            </Label>
+            <Input
+              type="text"
+              placeholder="Ej. Un lugar para discutir y aprender sobre matemáticas y física."
+              className={`w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary ${
+                errors.description
+                  ? "focus:ring-red-500 border border-red-500"
+                  : "focus:ring-primary"
+              }`}
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className="text-error text-sm mt-1">
+                {errors.description.message}
+              </p>
+            )}
+          </Field>
+        </Fieldset>
 
         {/* Etiquetas */}
-        <div>
-          <label
-            htmlFor="tags"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Etiquetas
-          </label>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            Presiona Enter para añadir una nueva etiqueta.
+        <Fieldset className="bg-bg-gray rounded-lg shadow-md p-6">
+          <Legend className="text-lg font-semibold text-white mb-1">
+            Temas de la comunidad
+          </Legend>
+          <p className="text-sm text-gray-400 mb-4">
+            Añade o edita etiquetas para mejorar la visibilidad de tu comunidad.
           </p>
-          <div className="flex gap-2 justify-between items-center mb-4">
-            <input
-              type="text"
-              id="tags"
-              ref={tagInputRef}
-              onKeyPress={handleNewTag}
-              className="w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white"
-              placeholder="Ej. c++ en espanol"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                const value = tagInputRef.current?.value.trim() || "";
-                if (value) {
-                  handleAddTag(value);
-                  tagInputRef.current!.value = "";
-                }
-              }}
-              className="text-md px-4 py-2 bg-primary text-white rounded-sm hover:bg-primary-hover transition"
-            >
-              Agregar
-            </button>
-          </div>
 
-          {/* Sugerencias */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {availableTags
-              .filter((tag) => !selectedTags.includes(tag))
-              .slice(0, 5)
-              .map((tag) => (
-                <button
-                  type="button"
-                  key={tag}
-                  onClick={() => handleAddTag(tag)}
-                  className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                >
-                  + {tag}
-                </button>
-              ))}
-          </div>
-
-          {/* Etiquetas seleccionadas */}
-          <div className="flex flex-wrap gap-2">
             {selectedTags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+                className="animate-rainbow-bg text-white px-6 py-3 rounded-md flex items-center text-lg font-semibold shadow-lg transition-transform duration-200 hover:scale-105"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
-                  className="ml-1 text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  className="ml-3 text-red-300 hover:text-red-100 text-2xl font-bold focus:outline-none"
+                  aria-label={`Remove ${tag}`}
                 >
-                  ×
+                  &times;
                 </button>
               </span>
             ))}
           </div>
-        </div>
 
-        {/* Botones */}
-        <div className="flex gap-4 pt-4">
+          {selectedTags.length < maxTags && (
+            <div>
+              <Input
+                type="text"
+                placeholder="Ej. programación"
+                className="w-full border border-gray-600 rounded px-3 py-2 text-sm bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleNewTag}
+              />
+              {isSearching && (
+                <p className="text-sm text-gray-400 italic flex items-center gap-2 mt-2">
+                  <span className="animate-pulse">🔍</span> Buscando...
+                </p>
+              )}
+              {suggestions.length > 0 && !isSearching && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {suggestions.slice(0, 5).map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleAddTag(suggestion)}
+                      className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-gray-100 text-sm font-medium rounded-full transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                    >
+                      + {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedTags.length >= maxTags && (
+            <p className="text-sm text-gray-400 mt-2">
+              Has alcanzado el máximo de {maxTags} etiquetas.
+            </p>
+          )}
+        </Fieldset>
+
+        {/* Acciones */}
+        <div className="flex justify-center gap-4 mt-6">
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            disabled={submitting || !isValid}
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+            disabled={!isValid || submitting}
+            className="px-6 py-2 bg-primary text-white rounded hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed transition"
           >
             {submitting ? "Guardando..." : "Guardar cambios"}
           </button>
