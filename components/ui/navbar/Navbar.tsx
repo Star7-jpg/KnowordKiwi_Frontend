@@ -13,7 +13,7 @@ export default function Navbar() {
       </div>
       <SearchBar />
       <div className="flex items-center space-x-4 ml-8 mr-4">
-        {pathname === "/communities" && (
+        {pathname.includes("communities") && (
           <Link
             href={"/communities/create"}
             className="text-sm bg-primary text-white px-4 py-2 rounded hover:bg-primary-hover cursor-pointer transition-colors ease-in"

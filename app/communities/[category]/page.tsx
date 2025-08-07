@@ -25,7 +25,6 @@ async function getCommunitiesByCategory(
   category: string,
 ): Promise<Community[]> {
   try {
-    // Asumiendo que tu backend tiene un endpoint para obtener comunidades por categoría
     const response = await privateApiClient(`communities/tag/${category}/`);
     return await response.data;
   } catch (error) {
@@ -63,11 +62,11 @@ export default async function CategoryPage({
         Comunidades de {category}
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hover:-translate-y-1 transition-all duration-300">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
         {communities.map((community) => (
           <div
             key={community.id}
-            className="bg-[#121212] rounded-xl overflow-hidden hover:bg-[#1f1f1f] transition-all duration-300 hover:shadow-lg"
+            className="bg-[#121212] rounded-xl overflow-hidden hover:bg-[#1f1f1f] hover:-translate-y-1 transition-all duration-300 hover:shadow-lg"
           >
             {/* Banner de la comunidad */}
             <div className="h-24 relative">
