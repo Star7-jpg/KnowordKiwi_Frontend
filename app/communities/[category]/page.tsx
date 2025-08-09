@@ -76,6 +76,7 @@ export default async function CategoryPage({
               {community.banner ? (
                 <Image
                   src={community.banner}
+                  fill
                   alt={`Banner de ${community.name}`}
                   className="w-full h-full object-cover"
                 />

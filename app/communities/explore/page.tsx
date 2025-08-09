@@ -3,6 +3,7 @@ import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import privateApiClient from "@/services/privateApiClient";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Image from "next/image"; // Importa el componente Image de Next.js
 
 interface Tag {
   id: string;
@@ -75,9 +76,26 @@ export default function ExploreCommunitiesPage() {
               {category.communities.slice(0, 4).map((community, idx) => (
                 <div
                   key={idx}
-                  className="bg-[#121212] rounded-md h-24 flex items-center justify-center text-sm text-center p-2"
+                  className="rounded-md h-24 relative overflow-hidden"
                 >
-                  {community.name}
+                  {/* Condición para mostrar la imagen de banner o un fondo sólido */}
+                  {community.banner ? (
+                    <Image
+                      src={community.banner}
+                      alt={`Banner de la comunidad ${community.name}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="absolute inset-0"
+                      priority
+                    />
+                  ) : (
+                    <div className="bg-[#121212] w-full h-full"></div>
+                  )}
+
+                  {/* Texto superpuesto, siempre visible */}
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-center p-2 bg-opacity-50 hover:bg-opacity-70 transition-colors duration-200">
+                    {community.name}
+                  </div>
                 </div>
               ))}
             </div>
