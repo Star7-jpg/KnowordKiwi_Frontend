@@ -20,6 +20,7 @@ import { createCommunitySchema } from "../schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import privateApiClient from "@/services/privateApiClient";
+import { uploadToCloudinary } from "@/services/cloudinaryService";
 import debounce from "lodash/debounce";
 
 type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
@@ -37,12 +38,15 @@ export default function CreateCommunityPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isUploadingHeader, setIsUploadingHeader] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const maxTags = 5;
   const router = useRouter();
   const {
     register,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors, isValid },
   } = useForm<CreateCommunityPageData>({
@@ -53,14 +57,36 @@ export default function CreateCommunityPage() {
   watch("name");
   watch("description");
 
-  const handleImageChange = (
+  const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    setPreview: (url: string | null) => void,
+    type: "header" | "avatar",
   ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
+    if (!file) return;
+
+    const setPreview = type === "header" ? setHeaderPreview : setAvatarPreview;
+    const setIsLoading =
+      type === "header" ? setIsUploadingHeader : setIsUploadingAvatar;
+
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
+    setIsLoading(true);
+    setSubmissionError(null);
+
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(file);
+      setValue(type, cloudinaryUrl, { shouldValidate: true });
+    } catch (error) {
+      console.error(`Error al subir la imagen de ${type}:`, error);
+      setSubmissionError(
+        `No se pudo subir la imagen de ${type}. Inténtalo de nuevo.`,
+      );
+      setPreview(null);
+      setValue(type, undefined, { shouldValidate: true });
+    } finally {
+      // No es necesario revocar la URL local aquí si la quieres mantener para la preview
+      // URL.revokeObjectURL(localUrl);
+      setIsLoading(false);
     }
   };
 
@@ -124,15 +150,15 @@ export default function CreateCommunityPage() {
   }
 
   async function submitCreateCommunityForm(data: CreateCommunityPageData) {
-    const formData = {
-      ...data,
-      tags: selectedTags,
-      header: headerPreview,
-      avatar: avatarPreview,
-    };
-    console.log("Datos del formulario:", formData);
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    const communityData = { ...data, tags: selectedTags };
+    console.log(communityData);
     try {
-      const response = await privateApiClient.post("/communities/", formData);
+      const response = await privateApiClient.post(
+        "/communities/",
+        communityData,
+      );
       console.log("Comunidad creada:", response.data);
       setIsSubmitCorrect(true);
     } catch (error) {
@@ -140,7 +166,8 @@ export default function CreateCommunityPage() {
       setSubmissionError(
         "Error al crear la comunidad. Por favor, inténtalo de nuevo.",
       );
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -275,43 +302,58 @@ export default function CreateCommunityPage() {
 
           <div className="space-y-6">
             {/* Banner */}
-            <label className="block border border-dashed border-zinc-600 rounded-lg p-6 cursor-pointer hover:border-white transition text-center">
+            <label className="block border border-dashed border-zinc-600 rounded-lg p-6 cursor-pointer hover:border-white transition text-center relative">
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleImageChange(e, setHeaderPreview)}
+                onChange={(e) => handleImageUpload(e, "header")}
+                disabled={isUploadingHeader}
               />
+              {isUploadingHeader && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                </div>
+              )}
               {headerPreview ? (
                 <img
                   src={headerPreview}
-                  alt="Cabecera"
+                  alt="Previsualización de la cabecera"
                   className="w-full max-h-48 object-cover rounded-md"
                 />
               ) : (
-                <>
-                  <strong className="block text-white mb-1">
-                    Sube la cabecera
-                  </strong>
-                  <p className="text-sm text-zinc-400">
-                    Pulsa aquí para elegir una imagen. Debe tener un tamaño de
-                    1840 x 560 píxeles.
-                  </p>
-                </>
+                !isUploadingHeader && (
+                  <>
+                    <strong className="block text-white mb-1">
+                      Sube la cabecera
+                    </strong>
+                    <p className="text-sm text-zinc-400">
+                      Pulsa aquí para elegir una imagen. Debe tener un tamaño de
+                      1840 x 560 píxeles.
+                    </p>
+                  </>
+                )
               )}
             </label>
 
             {/* Avatar */}
             <label className="flex items-center gap-4 cursor-pointer group transition">
-              <div className="w-20 h-20 border border-dashed border-zinc-600 rounded-lg flex items-center justify-center bg-gray-800">
-                {avatarPreview ? (
+              <div className="w-20 h-20 border border-dashed border-zinc-600 rounded-lg flex items-center justify-center bg-gray-800 relative">
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                  </div>
+                )}
+                {avatarPreview && !isUploadingAvatar ? (
                   <img
                     src={avatarPreview}
-                    alt="Avatar"
+                    alt="Previsualización del avatar"
                     className="w-full h-full object-cover rounded-md"
                   />
                 ) : (
-                  <ImageIcon className="text-zinc-400 w-6 h-6" />
+                  !isUploadingAvatar && (
+                    <ImageIcon className="text-zinc-400 w-6 h-6" />
+                  )
                 )}
               </div>
 
@@ -328,7 +370,8 @@ export default function CreateCommunityPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleImageChange(e, setAvatarPreview)}
+                onChange={(e) => handleImageUpload(e, "avatar")}
+                disabled={isUploadingAvatar}
               />
             </label>
           </div>
@@ -338,7 +381,12 @@ export default function CreateCommunityPage() {
           <button
             type="submit"
             className="px-4 py-2 bg-primary text-color-text font-bold rounded hover:bg-primary-hover transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!isValid || selectedTags.length < 3}
+            disabled={
+              isUploadingHeader ||
+              isUploadingAvatar ||
+              !isValid ||
+              selectedTags.length < 3
+            }
             onClick={() => {
               setIsSubmitting(true);
             }}

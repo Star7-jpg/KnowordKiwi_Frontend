@@ -10,8 +10,8 @@ type Community = {
   id: string;
   name: string;
   description: string;
-  avatar_url: string | null;
-  banner_url: string | null;
+  avatar: string | null;
+  banner: string | null;
   is_private: boolean;
   created_by: string;
   created_at: string;
@@ -39,8 +39,9 @@ export default async function CategoryPage({
 }: {
   params: { category: string };
 }) {
-  const category = params.category.toLowerCase();
-  const communities = await getCommunitiesByCategory(category);
+  const categoryForApi = params.category;
+  const communities = await getCommunitiesByCategory(categoryForApi);
+  const displayCategory = decodeURIComponent(params.category);
 
   // Si no hay comunidades para esta categoría, mostramos notFound
   if (communities.length === 0) {
@@ -59,7 +60,7 @@ export default async function CategoryPage({
   return (
     <main className="min-h-screen text-white p-6">
       <h1 className="text-2xl font-bold mb-6 capitalize">
-        Comunidades de {category}
+        Comunidades de {displayCategory}
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
@@ -70,9 +71,9 @@ export default async function CategoryPage({
           >
             {/* Banner de la comunidad */}
             <div className="h-24 relative">
-              {community.banner_url ? (
+              {community.banner ? (
                 <img
-                  src={community.banner_url}
+                  src={community.banner}
                   alt={`Banner de ${community.name}`}
                   className="w-full h-full object-cover"
                 />
@@ -82,9 +83,9 @@ export default async function CategoryPage({
 
               {/* Avatar de la comunidad */}
               <div className="absolute -bottom-6 left-4">
-                {community.avatar_url ? (
+                {community.avatar ? (
                   <img
-                    src={community.avatar_url}
+                    src={community.avatar}
                     alt={community.name}
                     className="w-12 h-12 rounded-full border-2 border-[#121212] object-cover"
                   />

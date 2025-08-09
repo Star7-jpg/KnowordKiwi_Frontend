@@ -10,4 +10,6 @@ export const createCommunitySchema = z.object({
     .string()
     .min(3, "La descripción debe tener al menos 3 caracteres.")
     .max(500, "La descripción no puede tener más de 500 caracteres."),
+  header: z.string().optional(),
+  avatar: z.string().optional(),
 });

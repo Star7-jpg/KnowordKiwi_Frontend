@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import {
   Menu,
   Transition,
@@ -10,15 +10,12 @@ import {
 import { User } from "lucide-react";
 import Link from "next/link";
 import privateApiClient from "@/services/privateApiClient";
-import LostConnectionModal from "@/components/modals/LostConnectionModal";
 
 export function ProfileMenu() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const logoutFromBackend = async () => {
     try {
       await privateApiClient.post(`logout/`);
     } catch (error) {
-      setIsModalOpen(true);
       console.error("Error al cerrar sesión:", error);
     }
   };
@@ -77,13 +74,6 @@ export function ProfileMenu() {
           </MenuItem>
         </MenuItems>
       </Transition>
-      {isModalOpen && (
-        <LostConnectionModal
-          isOpen={isModalOpen}
-          message="Ocurrió un error al cerrar sesión. Intenta de nuevo."
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
     </Menu>
   );
 }
