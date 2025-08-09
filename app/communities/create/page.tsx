@@ -1,18 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Description,
-  Transition,
-  TransitionChild,
-  Field,
-  Fieldset,
-  Input,
-  Label,
-  Legend,
-} from "@headlessui/react";
+import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -23,6 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import privateApiClient from "@/services/privateApiClient";
 import { uploadToCloudinary } from "@/services/cloudinaryService";
 import debounce from "lodash/debounce";
+import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
+import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
 
 type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
 
@@ -31,6 +21,7 @@ type TagsResponse = {
 };
 
 export default function CreateCommunityPage() {
+  const [communityId, setCommunityId] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -148,6 +139,13 @@ export default function CreateCommunityPage() {
     setSelectedTags((prev) => prev.filter((t) => t !== tagToRemove));
   }
 
+  const handleCloseSuccessModal = () => setIsSubmitCorrect(false);
+
+  const handleCloseErrorModal = () => {
+    setSubmissionError(null);
+    setIsSubmitting(false);
+  };
+
   async function submitCreateCommunityForm(data: CreateCommunityPageData) {
     setIsSubmitting(true);
     setSubmissionError(null);
@@ -160,6 +158,7 @@ export default function CreateCommunityPage() {
       );
       console.log("Comunidad creada:", response.data);
       setIsSubmitCorrect(true);
+      setCommunityId(response.data.id);
     } catch (error) {
       console.error("Error al crear la comunidad:", error);
       setSubmissionError(
@@ -405,122 +404,18 @@ export default function CreateCommunityPage() {
           </button>
         </div>
       </form>
-      <Transition show={isSubmitCorrect}>
-        <Dialog
-          onClose={() => setIsSubmitCorrect(false)}
-          className="relative z-50"
-        >
-          {/* Fondo oscuro (backdrop) */}
-          <TransitionChild
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-          </TransitionChild>
-
-          {/* Contenedor del modal centrado */}
-          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-            <TransitionChild
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <DialogPanel className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm mx-auto text-white">
-                <div className="flex flex-col items-center">
-                  <DialogTitle className="text-2xl font-bold text-terciary mb-4 text-center">
-                    Comunidad Creada
-                  </DialogTitle>
-
-                  <Description className="text-md text-gray-200 mb-6 text-center">
-                    Tu comunidad se ha creado con éxito. Comparte tu
-                    conocimiento con el mundo.
-                  </Description>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => setIsSubmitCorrect(false)}
-                      className="px-4 py-2 bg-primary rounded hover:bg-primary-hover text-white"
-                    >
-                      OK, lo he entendido
-                    </button>
-                    <button
-                      onClick={() => router.push("/communities")}
-                      className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
-                    >
-                      Muestrame mi comunidad
-                    </button>
-                  </div>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
-          </div>
-        </Dialog>
-      </Transition>
-      <Transition show={!!submissionError}>
-        <Dialog
-          onClose={() => setIsSubmitCorrect(false)}
-          className="relative z-50"
-        >
-          {/* Fondo oscuro (backdrop) */}
-          <TransitionChild
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-          </TransitionChild>
-
-          {/* Contenedor del modal centrado */}
-          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-            <TransitionChild
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <DialogPanel className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm mx-auto text-white">
-                <div className="flex flex-col items-center">
-                  <DialogTitle className="text-2xl font-bold text-secondary mb-4 text-center">
-                    Ha ocurrido un error al crear la comunidad.
-                  </DialogTitle>
-
-                  <Description className="text-md text-gray-200 mb-6 text-center">
-                    Por favor, intenta nuevamente.
-                  </Description>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => {
-                        setSubmissionError(null);
-                        setIsSubmitting(false);
-                      }}
-                      className="px-4 py-2 bg-primary rounded hover:bg-primary-hover text-white"
-                    >
-                      Reintentar
-                    </button>
-                    <button
-                      onClick={() => router.push("/communities")}
-                      className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
-                    >
-                      Ir a comunidades
-                    </button>
-                  </div>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
-          </div>
-        </Dialog>
-      </Transition>
+      {/* Modal de éxito o error */}
+      <CommunitySuccessModal
+        isOpen={isSubmitCorrect}
+        onClose={handleCloseSuccessModal}
+        message=" Tu comunidad se ha creado con éxito. Comparte tu conocimiento con el mundo."
+        communityId={communityId}
+      />
+      <CommunityErrorModal
+        isOpen={!!submissionError}
+        onClose={handleCloseErrorModal}
+        message={submissionError || undefined}
+      />
     </div>
   );
 }

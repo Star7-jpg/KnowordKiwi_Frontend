@@ -13,6 +13,8 @@ import { ImageIcon } from "lucide-react";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { uploadToCloudinary } from "@/services/cloudinaryService";
 import { Community } from "@/types/community/community";
+import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
+import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
 
 type TagsResponse = {
   name: string;
@@ -31,6 +33,7 @@ export default function CommunityEditForm() {
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -92,10 +95,12 @@ export default function CommunityEditForm() {
     };
     try {
       await privateApiClient.patch(`/communities/${communityId}/`, payload);
-      router.push(`/communities/community/${communityId}`);
-      router.refresh();
+      setIsSubmitCorrect(true);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Error al guardar los cambios.");
+      setSubmissionError(
+        err.response?.data?.message ||
+          "Ha ocurrido un error al actualizar la comunidad. Por favor, inténtalo de nuevo.",
+      );
       console.error("Error updating community:", err);
     } finally {
       setSubmitting(false);
@@ -190,6 +195,12 @@ export default function CommunityEditForm() {
       fetchTagSuggestions.cancel();
     };
   }, [inputValue, fetchTagSuggestions]);
+
+  const handleCloseSuccessModal = () => setIsSubmitCorrect(false);
+
+  const handleCloseErrorModal = () => {
+    setSubmissionError(null);
+  };
 
   if (loading) {
     return (
@@ -437,6 +448,18 @@ export default function CommunityEditForm() {
           </button>
         </div>
       </form>
+      {/* Modal de éxito o error */}
+      <CommunitySuccessModal
+        isOpen={isSubmitCorrect}
+        onClose={handleCloseSuccessModal}
+        message={"La comunidad se ha actualizado correctamente."}
+        communityId={communityId}
+      />
+      <CommunityErrorModal
+        isOpen={!!submissionError}
+        onClose={handleCloseErrorModal}
+        message={submissionError || undefined}
+      />
     </div>
   );
 }
