@@ -1,4 +1,5 @@
 import privateApiClient from "@/services/privateApiClient";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
 type ReadTag = {
@@ -26,6 +27,7 @@ async function getCommunitiesByCategory(
 ): Promise<Community[]> {
   try {
     const response = await privateApiClient(`communities/tag/${category}/`);
+    console.log(response.data);
     return await response.data;
   } catch (error) {
     console.error("Error fetching communities:", error);
@@ -72,7 +74,7 @@ export default async function CategoryPage({
             {/* Banner de la comunidad */}
             <div className="h-24 relative">
               {community.banner ? (
-                <img
+                <Image
                   src={community.banner}
                   alt={`Banner de ${community.name}`}
                   className="w-full h-full object-cover"
@@ -84,10 +86,12 @@ export default async function CategoryPage({
               {/* Avatar de la comunidad */}
               <div className="absolute -bottom-6 left-4">
                 {community.avatar ? (
-                  <img
+                  <Image
                     src={community.avatar}
                     alt={community.name}
                     className="w-12 h-12 rounded-full border-2 border-[#121212] object-cover"
+                    width={48}
+                    height={48}
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full border-2 border-[#121212] bg-gray-700 flex items-center justify-center">

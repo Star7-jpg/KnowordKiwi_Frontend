@@ -13,8 +13,8 @@ interface Community {
   read_tags: Tag[];
   name: string;
   description: string;
-  avatar_url: string | null;
-  banner_url: string | null;
+  avatar: string | null;
+  banner: string | null;
   is_private: boolean;
   created_by: string;
 }
