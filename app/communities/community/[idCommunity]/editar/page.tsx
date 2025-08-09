@@ -1,21 +1,17 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCommunitySchema } from "@/app/communities/schemas";
 import privateApiClient from "@/services/privateApiClient";
 import debounce from "lodash/debounce";
-import {
-  Dialog,
-  Field,
-  Fieldset,
-  Input,
-  Label,
-  Legend,
-} from "@headlessui/react";
+import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
+import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
+import { uploadToCloudinary } from "@/services/cloudinaryService";
 
 type ReadTag = {
   id: string;
@@ -28,8 +24,8 @@ type Community = {
   id: string;
   name: string;
   description: string;
-  avatar_url: string | null;
-  banner_url: string | null;
+  avatar: string | null;
+  banner: string | null;
   is_private: boolean;
   created_by: string;
   created_at: string;
@@ -50,6 +46,11 @@ export default function CommunityEditForm() {
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const maxTags = 5;
 
@@ -74,6 +75,14 @@ export default function CommunityEditForm() {
         setCommunity(data);
         setValue("name", data.name);
         setValue("description", data.description);
+        if (data.banner) {
+          setBannerPreview(data.banner);
+          setValue("banner", data.banner);
+        }
+        if (data.avatar) {
+          setAvatarPreview(data.avatar);
+          setValue("avatar", data.avatar);
+        }
         setSelectedTags(data.read_tags.map((tag) => tag.name.toLowerCase()));
       } catch (err) {
         setError("No se pudo cargar la comunidad.");
@@ -87,12 +96,14 @@ export default function CommunityEditForm() {
 
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
-    setError(null);
+    setSubmissionError(null);
     const payload = {
       id: communityId,
       name: data.name,
       description: data.description,
       tags: selectedTags,
+      avatar: data.avatar,
+      banner: data.banner,
     };
     try {
       await privateApiClient.patch(`/communities/${communityId}/`, payload);
@@ -130,6 +141,36 @@ export default function CommunityEditForm() {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddTag(inputValue);
+    }
+  };
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "banner" | "avatar",
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const setPreview = type === "banner" ? setBannerPreview : setAvatarPreview;
+    const setIsLoading =
+      type === "banner" ? setIsUploadingBanner : setIsUploadingAvatar;
+
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
+    setIsLoading(true);
+    setSubmissionError(null);
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(file);
+      setValue(type, cloudinaryUrl, { shouldValidate: true });
+    } catch (error) {
+      console.error(`Error al subir la imagen de ${type}:`, error);
+      setSubmissionError(
+        `No se pudo subir la imagen de ${type}. Inténtalo de nuevo.`,
+      );
+      setPreview(null);
+      setValue(type, undefined, { shouldValidate: true });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,44 +215,7 @@ export default function CommunityEditForm() {
   }
 
   if (error) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-gray-800 rounded-xl border border-gray-600 shadow-lg p-6 text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="bg-red-900 p-3 rounded-full">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-red-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-white">
-            ¡Ups! Algo salió mal
-          </h2>
-          <p className="text-gray-400">
-            No pudimos conectar con el servidor. Estamos trabajando para
-            solucionarlo.
-          </p>
-          <p className="text-sm text-error font-medium">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition"
-          >
-            Reintentar
-          </button>
-        </div>
-      </main>
-    );
+    return <ErrorMessageScreen error={error} />;
   }
 
   return (
@@ -337,6 +341,97 @@ export default function CommunityEditForm() {
               Has alcanzado el máximo de {maxTags} etiquetas.
             </p>
           )}
+        </Fieldset>
+
+        {/* Imágenes */}
+        <Fieldset className="bg-bg-gray rounded-lg shadow-md p-6 w-full">
+          <Legend className="text-lg font-semibold text-white mb-1">
+            Imágenes de la comunidad
+          </Legend>
+          <p className="text-sm text-gray-400 mb-6">
+            Añade un banner y un avatar representativo para que tu comunidad se
+            vea única.
+          </p>
+
+          <div className="space-y-6">
+            {/* Banner */}
+            <label className="block border border-dashed border-zinc-600 rounded-lg p-6 cursor-pointer hover:border-white transition text-center relative">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleImageUpload(e, "banner")}
+                disabled={isUploadingBanner}
+              />
+              {isUploadingBanner && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                </div>
+              )}
+              {bannerPreview ? (
+                <Image
+                  src={bannerPreview}
+                  width={1840}
+                  height={560}
+                  alt="Previsualización de la cabecera"
+                  className="w-full max-h-48 object-cover rounded-md"
+                />
+              ) : (
+                !isUploadingBanner && (
+                  <>
+                    <strong className="block text-white mb-1">
+                      Sube la cabecera
+                    </strong>
+                    <p className="text-sm text-zinc-400">
+                      Pulsa aquí para elegir una imagen. Debe tener un tamaño de
+                      1840 x 560 píxeles.
+                    </p>
+                  </>
+                )
+              )}
+            </label>
+
+            {/* Avatar */}
+            <label className="flex items-center gap-4 cursor-pointer group transition">
+              <div className="w-20 h-20 border border-dashed border-zinc-600 rounded-lg flex items-center justify-center bg-gray-800 relative">
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                  </div>
+                )}
+                {avatarPreview && !isUploadingAvatar ? (
+                  <Image
+                    src={avatarPreview}
+                    width={512}
+                    height={512}
+                    alt="Previsualización del avatar"
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                ) : (
+                  !isUploadingAvatar && (
+                    <ImageIcon className="text-zinc-400 w-6 h-6" />
+                  )
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <strong className="text-sm text-white mb-1">
+                  Sube un avatar
+                </strong>
+                <p className="text-sm text-zinc-400">
+                  El formato ideal es cuadrado con un tamaño de 512 píxeles.
+                </p>
+              </div>
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleImageUpload(e, "avatar")}
+                disabled={isUploadingAvatar}
+              />
+            </label>
+          </div>
         </Fieldset>
 
         {/* Acciones */}

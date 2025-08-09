@@ -14,6 +14,7 @@ import {
   Legend,
 } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { createCommunitySchema } from "../schemas";
@@ -84,8 +85,6 @@ export default function CreateCommunityPage() {
       setPreview(null);
       setValue(type, undefined, { shouldValidate: true });
     } finally {
-      // No es necesario revocar la URL local aquí si la quieres mantener para la preview
-      // URL.revokeObjectURL(localUrl);
       setIsLoading(false);
     }
   };
@@ -316,8 +315,10 @@ export default function CreateCommunityPage() {
                 </div>
               )}
               {bannerPreview ? (
-                <img
+                <Image
                   src={bannerPreview}
+                  width={1840}
+                  height={560}
                   alt="Previsualización de la cabecera"
                   className="w-full max-h-48 object-cover rounded-md"
                 />
@@ -345,8 +346,10 @@ export default function CreateCommunityPage() {
                   </div>
                 )}
                 {avatarPreview && !isUploadingAvatar ? (
-                  <img
+                  <Image
                     src={avatarPreview}
+                    width={512}
+                    height={512}
                     alt="Previsualización del avatar"
                     className="w-full h-full object-cover rounded-md"
                   />
