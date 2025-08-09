@@ -32,13 +32,13 @@ type TagsResponse = {
 export default function CreateCommunityPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [headerPreview, setHeaderPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [isUploadingHeader, setIsUploadingHeader] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const maxTags = 5;
@@ -59,14 +59,14 @@ export default function CreateCommunityPage() {
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "header" | "avatar",
+    type: "banner" | "avatar",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const setPreview = type === "header" ? setHeaderPreview : setAvatarPreview;
+    const setPreview = type === "banner" ? setBannerPreview : setAvatarPreview;
     const setIsLoading =
-      type === "header" ? setIsUploadingHeader : setIsUploadingAvatar;
+      type === "banner" ? setIsUploadingBanner : setIsUploadingAvatar;
 
     const localUrl = URL.createObjectURL(file);
     setPreview(localUrl);
@@ -307,22 +307,22 @@ export default function CreateCommunityPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleImageUpload(e, "header")}
-                disabled={isUploadingHeader}
+                onChange={(e) => handleImageUpload(e, "banner")}
+                disabled={isUploadingBanner}
               />
-              {isUploadingHeader && (
+              {isUploadingBanner && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
                 </div>
               )}
-              {headerPreview ? (
+              {bannerPreview ? (
                 <img
-                  src={headerPreview}
+                  src={bannerPreview}
                   alt="Previsualización de la cabecera"
                   className="w-full max-h-48 object-cover rounded-md"
                 />
               ) : (
-                !isUploadingHeader && (
+                !isUploadingBanner && (
                   <>
                     <strong className="block text-white mb-1">
                       Sube la cabecera
@@ -382,7 +382,7 @@ export default function CreateCommunityPage() {
             type="submit"
             className="px-4 py-2 bg-primary text-color-text font-bold rounded hover:bg-primary-hover transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
-              isUploadingHeader ||
+              isUploadingBanner ||
               isUploadingAvatar ||
               !isValid ||
               selectedTags.length < 3
