@@ -12,27 +12,12 @@ import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { uploadToCloudinary } from "@/services/cloudinaryService";
+import { Community } from "@/types/community/community";
 
-type ReadTag = {
-  id: string;
-  name: string;
-};
 type TagsResponse = {
   name: string;
 };
-type Community = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
-  banner: string | null;
-  is_private: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  read_tags: ReadTag[];
-};
+
 type FormData = z.infer<typeof createCommunitySchema>;
 
 export default function CommunityEditForm() {

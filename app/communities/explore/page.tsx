@@ -4,22 +4,7 @@ import privateApiClient from "@/services/privateApiClient";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image"; // Importa el componente Image de Next.js
-
-interface Tag {
-  id: string;
-  name: string;
-}
-
-interface Community {
-  id: string;
-  read_tags: Tag[];
-  name: string;
-  description: string;
-  avatar: string | null;
-  banner: string | null;
-  is_private: boolean;
-  created_by: string;
-}
+import { Community } from "@/types/community/community";
 
 interface CategoryData {
   tag: string;

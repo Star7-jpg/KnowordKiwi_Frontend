@@ -7,28 +7,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-
-type ReadTag = {
-  id: string;
-  name: string;
-};
-
-type Community = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
-  banner: string | null;
-  is_private: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  read_tags: ReadTag[];
-  is_member: boolean;
-  is_owner: boolean;
-  can_edit: boolean;
-};
+import { Community } from "@/types/community/community";
 
 async function getCommunityById(communityId: string): Promise<Community> {
   try {

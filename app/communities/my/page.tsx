@@ -6,29 +6,14 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
+import { Community } from "@/types/community/community";
 
-type ReadTag = {
-  id: string;
-  name: string;
-};
-
-type Community = {
-  id: string;
-  read_tags: ReadTag[];
-  name: string;
-  description: string;
-  avatar: string | null;
-  banner: string | null;
-  is_private: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  created_by: string;
-  member_count: number;
-};
+type CommunityWithMemberCount = Community & { member_count: number };
 
 export default function UserCommunitiesList() {
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communities, setCommunities] = useState<CommunityWithMemberCount[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +22,7 @@ export default function UserCommunitiesList() {
       try {
         setLoading(true);
         const response = await privateApiClient("communities/my-communities/");
-        const data: Community[] = await response.data;
+        const data: CommunityWithMemberCount[] = await response.data;
         setCommunities(data);
       } catch (err) {
         console.error("Error fetching communities:", err);

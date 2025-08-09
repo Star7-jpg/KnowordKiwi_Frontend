@@ -1,30 +1,15 @@
 import privateApiClient from "@/services/privateApiClient";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { Community } from "@/types/community/community";
 
-type ReadTag = {
-  id: string;
-  name: string;
-};
-
-type Community = {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string | null;
-  banner: string | null;
-  is_private: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  read_tags: ReadTag[];
+type CommunityWithMemberCount = Community & {
   member_count: number;
 };
 
 async function getCommunitiesByCategory(
   category: string,
-): Promise<Community[]> {
+): Promise<CommunityWithMemberCount[]> {
   try {
     const response = await privateApiClient(`communities/tag/${category}/`);
     console.log(response.data);
