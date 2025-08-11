@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { Community } from "@/types/community/community";
+import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
 
 async function getCommunityById(communityId: string): Promise<Community> {
   try {
@@ -24,6 +25,7 @@ export default function CommunityDetail() {
   const communityId = params.idCommunity as string;
 
   const [community, setCommunity] = useState<Community | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -201,7 +203,10 @@ export default function CommunityDetail() {
                 >
                   Editar
                 </Link>
-                <button className="px-4 py-2 bg-text-error text-white rounded-lg hover:bg-red-700 transition-colors">
+                <button
+                  onClick={() => setIsDeleting(true)}
+                  className="px-4 py-2 bg-text-error text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
                   Eliminar
                 </button>
               </>
@@ -284,6 +289,15 @@ export default function CommunityDetail() {
           </div>
         </div>
       </div>
+
+      {isDeleting && (
+        <DeleteCommunityModal
+          isOpen={isDeleting}
+          onClose={() => setIsDeleting(false)}
+          communityName={community.name}
+          communityId={community.id}
+        />
+      )}
     </div>
   );
 }
