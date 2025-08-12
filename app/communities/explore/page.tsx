@@ -3,7 +3,7 @@ import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import privateApiClient from "@/services/privateApiClient";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Image from "next/image"; // Importa el componente Image de Next.js
+import Image from "next/image";
 import { Community } from "@/types/community/community";
 
 interface CategoryData {
@@ -48,51 +48,67 @@ export default function ExploreCommunitiesPage() {
   }
 
   return (
-    <main className="min-h-screen text-white p-6">
-      <h1 className="text-2xl font-bold mb-6">Explorar Comunidades</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <main className="min-h-screen text-white p-6 md:p-12 lg:p-16">
+      <h1 className="text-3xl md:text-4xl font-bold mb-8">
+        Explorar Comunidades 🌍
+      </h1>
+      <div className="space-y-12">
         {categoriesData.map((category, index) => (
-          <div
-            key={index}
-            className="bg-bg-gray rounded-lg shadow-md p-4 flex flex-col justify-between"
-          >
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Renderiza solo las primeras 4 comunidades */}
-              {category.communities.slice(0, 4).map((community, idx) => (
-                <div
+          <div key={index}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl md:text-2xl font-semibold capitalize">
+                {category.tag.charAt(0).toUpperCase() + category.tag.slice(1)}
+              </h2>
+              <Link
+                href={`/communities/${category.tag.toLowerCase()}`}
+                className="text-sm text-gray-400 hover:text-terciary transition-colors duration-200"
+              >
+                Ver todo →
+              </Link>
+            </div>
+            <div className="flex overflow-x-auto gap-4 p-2 -m-2 custom-scrollbar">
+              {category.communities.map((community, idx) => (
+                <Link
+                  href={`/communities/community/${community.id}`}
                   key={idx}
-                  className="rounded-md h-24 relative overflow-hidden"
+                  className="flex-none w-64 h-40 rounded-lg relative overflow-hidden group transition-transform transform hover:scale-105 duration-300"
                 >
-                  {/* Condición para mostrar la imagen de banner o un fondo sólido */}
                   {community.banner ? (
                     <Image
                       src={community.banner}
                       alt={`Banner de la comunidad ${community.name}`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="absolute inset-0"
-                      priority
+                      layout="fill"
+                      objectFit="cover"
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      priority={idx < 4}
                     />
                   ) : (
                     <div className="bg-[#121212] w-full h-full"></div>
                   )}
-
-                  {/* Texto superpuesto, siempre visible */}
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-center p-2 bg-opacity-50 hover:bg-opacity-70 transition-colors duration-200">
-                    {community.name}
+                  <div className="absolute inset-0  bg-opacity-40 flex items-end p-4 group-hover:bg-opacity-60 transition-colors duration-200">
+                    <span className="text-white text-lg font-medium leading-tight">
+                      {community.name}
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-            <Link
-              href={`/communities/${category.tag.toLowerCase()}`}
-              className="text-sm font-semibold hover:underline"
-            >
-              {category.tag.charAt(0).toUpperCase() + category.tag.slice(1)}
-            </Link>
           </div>
         ))}
       </div>
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #2d2d2d;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #555;
+          border-radius: 4px;
+        }
+      `}</style>
     </main>
   );
 }
