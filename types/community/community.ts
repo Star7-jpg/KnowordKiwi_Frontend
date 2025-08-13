@@ -13,6 +13,7 @@ export type Community = {
   is_member: boolean;
   is_owner: boolean;
   can_edit: boolean;
+  member_count: number;
 };
 
 type ReadTag = {

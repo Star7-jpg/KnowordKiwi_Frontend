@@ -14,4 +14,5 @@ export const profileSchema = z.object({
     .min(3, "Tu nombre de usuario debe tener al menos 3 caracteres.")
     .max(20, "Tu nombre de usuario no puede tener más de 20 caracteres."),
   bio: z.string().optional(),
+  avatar_url: z.string().optional(),
 });

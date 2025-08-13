@@ -26,7 +26,7 @@ export function Banner() {
         <div className="flex flex-col md:flex-row md:items-start md:justify-around gap-8">
           {/* Avatar + seguidores */}
           <div className="flex flex-col items-center gap-4">
-            <Avatar src="/default-avatar.jpeg" size="lg" />
+            <Avatar src={avatar_url} size="lg" />
 
             <div className="flex gap-8 text-center">
               <div>

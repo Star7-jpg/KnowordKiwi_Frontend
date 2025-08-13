@@ -15,21 +15,22 @@ import { Pencil } from "lucide-react";
 import { profileSchema } from "../../schemas";
 import { useAuthStore } from "@/store/authStore";
 import privateApiClient from "@/services/privateApiClient";
+import { uploadToCloudinary } from "@/services/cloudinaryService";
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-interface ProfileData extends ProfileFormData {
-  avatar_url: string;
-}
-
 export default function ProfileEditor() {
   const [isEditing, setIsEditing] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Para abrir o cerrar el modal
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
-  const initialProfileData: ProfileData = {
+  const initialProfileData: ProfileFormData = {
     real_name: user?.real_name || "",
     email: user?.email || "",
     username: user?.username || "",
@@ -41,6 +42,8 @@ export default function ProfileEditor() {
     register,
     handleSubmit,
     formState: { errors, isDirty }, // isDirty para verificar si hay cambios en el formulario
+    setValue,
+    getValues,
     reset,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -48,8 +51,6 @@ export default function ProfileEditor() {
     mode: "onTouched",
   });
 
-  // Este efecto mantiene el formulario sincronizado con el estado global del usuario.
-  // Se ejecutará cuando el componente se monte por primera vez y cada vez que el objeto 'user' en el store cambie.
   useEffect(() => {
     if (user) {
       reset({
@@ -58,6 +59,7 @@ export default function ProfileEditor() {
         username: user.username || "",
         bio: user.bio || "",
       });
+      setAvatarPreview(user.avatar_url || null);
     }
   }, [user, reset]);
 
@@ -71,8 +73,6 @@ export default function ProfileEditor() {
 
   const handleEditClick = () => {
     if (isEditing) {
-      // Al hacer clic en "Cancelar", reseteamos
-      // el formulario a los valores actuales del store.
       if (user) {
         reset({
           real_name: user.real_name || "",
@@ -80,24 +80,60 @@ export default function ProfileEditor() {
           username: user.username || "",
           bio: user.bio || "",
         });
+        setAvatarPreview(user.avatar_url || null);
+        setSubmissionError(null);
       }
     }
     setIsEditing((prev) => !prev);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("handleImageUpload called");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const localURL = URL.createObjectURL(file);
+    setAvatarPreview(localURL);
+    setIsUploadingAvatar(true);
+    setSubmissionError(null);
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(file);
+      setValue("avatar_url", cloudinaryUrl, {
+        shouldValidate: true,
+        shouldDirty: true, // Hara que el campo se incluya en la validacion de isDirty
+      });
+    } catch (error) {
+      console.error("Error al subir la imagen de avatar:", error);
+      setSubmissionError(
+        "No se pudo subir la imagen de avatar. Inténtalo de nuevo.",
+      );
+      setAvatarPreview(user?.avatar_url || null);
+      setValue("avatar_url", user?.avatar_url, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const onSubmit = async (data: ProfileFormData) => {
     setIsSubmitting(true);
+    const updatedData = {
+      ...data,
+      avatar_url: getValues("avatar_url"),
+    };
+    console.log(updatedData);
     try {
-      const response = await privateApiClient.patch("/me/", data);
+      const response = await privateApiClient.patch("/me/", updatedData);
+      setUser(response.data);
       console.log(response.data);
-      // Actualizamos el estado global de Zustand con la respuesta del API
-      setUser(data);
       setIsEditing(false); // Salir del modo edición
-      openModal(); // Mostrar modal de éxito
+      openModal();
     } catch (error) {
       console.error("Error al actualizar el perfil:", error);
-      alert(
-        "Hubo un error al actualizar tu perfil. Por favor, inténtalo de nuevo.",
+      setSubmissionError(
+        "No se pudo actualizar el perfil. Inténtalo de nuevo.",
       );
     } finally {
       setIsSubmitting(false);
@@ -110,19 +146,36 @@ export default function ProfileEditor() {
 
       {/* Seccion de foto de perfil */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-gray-200 mb-6">
-        <Avatar src="/default-avatar.jpeg" size="lg" editable />
-        <div className="flex flex-col items-center justify-center sm:items-start ml-4">
-          <button
-            type="button"
-            className="px-4 py-2 bg-secondary rounded-lg text-sm font-medium hover:bg-secondary-hover transition-colors duration-200"
-          >
-            Subir Nueva Foto
-          </button>
-          <p className="text-gray-400 text-xs mt-4 text-center sm:text-left">
-            Recomendamos una imagen de al menos 800×800 pixeles. <br />
-            Asegurate que el formato de la imagen sea JPG o PNG
-          </p>
-        </div>
+        <Avatar
+          src={avatarPreview || "/default-avatar.jpeg"}
+          size="lg"
+          editable={isEditing}
+        />
+        {isEditing && (
+          <div className="flex flex-col items-center justify-center sm:items-start ml-4">
+            <label
+              htmlFor="avatar-upload"
+              className="px-4 py-2 bg-secondary rounded-lg text-sm font-medium hover:bg-secondary-hover transition-colors duration-200 cursor-pointer"
+            >
+              {isUploadingAvatar ? "Subiendo..." : "Subir nueva imagen"}
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={isUploadingAvatar}
+              />
+            </label>
+            {submissionError && (
+              <p className="text-red-500 mt-2">{submissionError}</p>
+            )}
+            <p className="text-gray-400 text-xs mt-4 text-center sm:text-left">
+              Recomendamos una imagen de al menos 800×800 pixeles. <br />
+              Asegurate que el formato de la imagen sea JPG o PNG
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Seccion de informacion personal */}

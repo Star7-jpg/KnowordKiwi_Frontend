@@ -9,6 +9,7 @@ import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { Community } from "@/types/community/community";
 import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
+import JoinCommunitySuccessModal from "@/components/modals/JoinCommunitySuccessModal";
 
 async function getCommunityById(communityId: string): Promise<Community> {
   try {
@@ -26,6 +27,8 @@ export default function CommunityDetail() {
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +55,20 @@ export default function CommunityDetail() {
 
     fetchCommunity();
   }, [communityId]);
+
+  const handleJoin = async () => {
+    try {
+      setIsJoining(true);
+      await privateApiClient.post(`/communities/${communityId}/join/`);
+      setIsJoined(true);
+      setCommunity((prev) => (prev ? { ...prev, is_member: true } : null));
+    } catch (err) {
+      console.error("Error joining community:", err);
+      setError("Hubo un error al unirse a la comunidad. Inténtalo más tarde.");
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -182,8 +199,11 @@ export default function CommunityDetail() {
           <div className="flex gap-3 flex-wrap mt-4">
             {/* Botón de Unirse: solo si no es miembro ni dueño */}
             {!community.is_owner && !community.is_member && (
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Unirse
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handleJoin}
+              >
+                {isJoining ? "Uniendo..." : "Unirse"}
               </button>
             )}
 
@@ -239,7 +259,7 @@ export default function CommunityDetail() {
                   Miembros
                 </p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  0 miembros
+                  {community.member_count} miembros
                 </p>
               </div>
             </div>
@@ -296,6 +316,15 @@ export default function CommunityDetail() {
           onClose={() => setIsDeleting(false)}
           communityName={community.name}
           communityId={community.id}
+        />
+      )}
+
+      {/* Modal de éxito al unirse */}
+      {isJoined && (
+        <JoinCommunitySuccessModal
+          isOpen={isJoined}
+          onClose={() => setIsJoined(false)}
+          communityName={community.name}
         />
       )}
     </div>

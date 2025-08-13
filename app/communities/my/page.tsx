@@ -59,8 +59,8 @@ export default function UserCommunitiesList() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+    <div className="min-h-screen text-white p-6 md:p-12 lg:p-16">
+      <h2 className="text-3xl md:text-4xl font-bold mb-8">
         Mis Comunidades ({communities.length})
       </h2>
 

@@ -3,13 +3,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Community } from "@/types/community/community";
 
-type CommunityWithMemberCount = Community & {
-  member_count: number;
-};
-
 async function getCommunitiesByCategory(
   category: string,
-): Promise<CommunityWithMemberCount[]> {
+): Promise<Community[]> {
   try {
     const response = await privateApiClient(`communities/tag/${category}/`);
     console.log(response.data);

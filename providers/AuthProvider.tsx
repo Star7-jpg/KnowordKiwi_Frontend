@@ -75,7 +75,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     // No hacemos nada mientras se verifica la sesión.
     if (loading) return;
 
-    const isProtectedRoute = protectedRoutes.includes(pathname);
+    const isProtectedRoute = protectedRoutes.some((route) =>
+      pathname.startsWith(route),
+    );
     const isPublicOnlyRoute = publicOnlyRoutes.includes(pathname);
 
     // Caso 1: Usuario NO autenticado intenta acceder a una ruta protegida.
