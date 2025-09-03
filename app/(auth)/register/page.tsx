@@ -242,7 +242,7 @@ export default function RegisterPage() {
           step === 3 ? handleSubmit(onSubmit) : (e) => e.preventDefault()
         }
       >
-        <Fieldset className="max-w-lg mx-auto space-y-8 rounded-lg shadow-lg p-8 bg-gray-900">
+        <Fieldset className="max-w-lg mx-auto space-y-8 rounded-lg shadow-lg p-8 bg-bg-gray">
           <Legend className="text-3xl font-bold mb-6 text-center">
             {step === 1 && "¡Bienvenido! Empecemos creando tu cuenta"}
             {step === 2 && "¿Cómo te gustaría que te conozcan?"}

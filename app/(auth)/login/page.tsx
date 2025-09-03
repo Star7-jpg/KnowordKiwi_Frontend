@@ -27,8 +27,7 @@ export default function LoginPage() {
   const [backendError, setBackendError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-
-  const loginUser = useAuthStore((state) => state.loginUser);
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
   const {
     register,
@@ -54,14 +53,12 @@ export default function LoginPage() {
     setShowErrorModal(false); // Cerrar modal de error si estaba abierto
 
     try {
-      const response = await publicApiClient.post("/login/", data);
-
-      const { user } = response.data;
-
-      loginUser(user);
+      const response = await publicApiClient.post("/auth/login", data);
+      const accessToken = response.data.data.accessToken;
+      setAccessToken(accessToken);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setBackendError(error.response.data.non_field_errors);
+        setBackendError(error.response.data.message);
         //Errores manuales para indicar error en las credenciales
         setError("email", { type: "manual" });
         setError("password", { type: "manual" });
@@ -111,7 +108,7 @@ export default function LoginPage() {
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-red-500 font-light text-sm mt-2">
+            <p className="text-red-500 font-light text-md mt-2">
               {errors.email.message}
             </p>
           )}
@@ -128,13 +125,13 @@ export default function LoginPage() {
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-red-500 font-light text-sm mt-2">
+            <p className="text-red-500 font-light text-md mt-2">
               {errors.password.message}
             </p>
           )}
         </Field>
         {backendError && ( //Mostrar error del backend si existe
-          <p className="text-text-error font-medium text-sm text-center mt-2">
+          <p className="text-text-error font-medium text-md text-center">
             {backendError}
           </p>
         )}
