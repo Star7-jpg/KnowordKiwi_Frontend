@@ -1,6 +1,6 @@
 "use client";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";

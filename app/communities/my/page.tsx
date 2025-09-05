@@ -1,7 +1,7 @@
 // components/UserCommunitiesList.tsx
 "use client";
 
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";

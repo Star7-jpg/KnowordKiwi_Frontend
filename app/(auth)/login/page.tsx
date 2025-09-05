@@ -25,8 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setIsAuthenticated: setIsAutenticated, getAuthStatus } =
-    useAuthStore();
+  const { isAuthenticated, setIsAuthenticated } = useAuthStore();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -51,7 +50,6 @@ export default function LoginPage() {
   watch("password");
 
   const { handleAxiosError } = useAxiosErrorHandler();
-  const isAuthenticated = getAuthStatus();
 
   useEffect(() => {
     // Si el usuario ya está autenticado, no debería estar en la página de login.
@@ -84,7 +82,7 @@ export default function LoginPage() {
 
       // Si login() es exitoso (no lanza error), las cookies ya están seteadas.
       router.push("/profile/me");
-      setIsAutenticated(true);
+      setIsAuthenticated(true);
     } catch (error: any) {
       if (
         error.response &&

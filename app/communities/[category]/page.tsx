@@ -1,4 +1,4 @@
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Community } from "@/types/community/community";

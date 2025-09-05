@@ -14,8 +14,8 @@ import { Avatar } from "@/components/ui/userProfile/Avatar";
 import { Pencil } from "lucide-react";
 import { profileSchema } from "../../schemas";
 import { useAuthStore } from "@/store/authStore";
-import privateApiClient from "@/services/privateApiClient";
-import { uploadToCloudinary } from "@/services/cloudinaryService";
+import privateApiClient from "@/services/client/privateApiClient";
+import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 

@@ -9,7 +9,7 @@ import {
 } from "@headlessui/react";
 import { User } from "lucide-react";
 import Link from "next/link";
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 
 export function ProfileMenu() {
   const logoutFromBackend = async () => {

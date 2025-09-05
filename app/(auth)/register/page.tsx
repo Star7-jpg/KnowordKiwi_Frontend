@@ -10,7 +10,7 @@ import {
   Textarea,
   Transition,
 } from "@headlessui/react";
-import publicApiClient from "@/services/publicApiClient";
+import publicApiClient from "@/services/client/publicApiClient";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";

@@ -1,5 +1,5 @@
 "use client";
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 import {
   Dialog,
   DialogPanel,

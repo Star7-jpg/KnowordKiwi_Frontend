@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Users, Calendar, Tag, Lock, Globe } from "lucide-react";
-import privateApiClient from "@/services/privateApiClient";
+import privateApiClient from "@/services/client/privateApiClient";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";

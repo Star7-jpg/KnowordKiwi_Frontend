@@ -1,28 +1,24 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
+import { devtools, persist, createJSONStorage } from "zustand/middleware";
 
 type AuthState = {
   isAuthenticated: boolean;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
-  getAuthStatus: () => boolean;
   clearAuth: () => void;
 };
 
 export const useAuthStore = create<AuthState>()(
-  devtools((set) => ({
-    isAuthenticated: false,
-    //Setear en localStorage un flag para marcar isAutenticated como true
-    setIsAuthenticated: (isAuthenticated: boolean) => {
-      sessionStorage.setItem(
-        "isAuthenticated",
-        JSON.stringify(isAuthenticated),
-      );
-      set({ isAuthenticated });
-    },
-
-    getAuthStatus: () => {
-      const isAuthenticated = sessionStorage.getItem("isAuthenticated");
-      return isAuthenticated ? JSON.parse(isAuthenticated) : false;
-    },
-  })),
+  devtools(
+    persist(
+      (set) => ({
+        isAuthenticated: false,
+        setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+        clearAuth: () => set({ isAuthenticated: false }),
+      }),
+      {
+        name: "auth-storage", // nombre de la clave en sessionStorage
+        storage: createJSONStorage(() => sessionStorage), // especifica sessionStorage
+      },
+    ),
+  ),
 );
