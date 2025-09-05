@@ -11,23 +11,22 @@ import {
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import axios from "axios";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas";
-import { useAuthStore } from "@/store/authStore";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
-import publicApiClient from "@/services/publicApiClient";
+import { login } from "@/services/auth/authService";
+import { useRouter } from "next/navigation";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
   const {
     register,
@@ -48,21 +47,25 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    setBackendError(null); // Limipiar errores previos del backend
+    setBackendError(null); // Limpiar errores previos del backend
     setSubmissionError(null); // Limpiar errores de envío previos
     setShowErrorModal(false); // Cerrar modal de error si estaba abierto
 
     try {
-      const response = await publicApiClient.post("/auth/login", data);
-      const accessToken = response.data.data.accessToken;
-      setAccessToken(accessToken);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
+      await login(data);
+      // Si login() es exitoso (no lanza error), las cookies ya están seteadas.
+      router.push("/profile/me");
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
         setBackendError(error.response.data.message);
-        //Errores manuales para indicar error en las credenciales
         setError("email", { type: "manual" });
         setError("password", { type: "manual" });
       } else {
+        // Error de red u otro problema
         handleAxiosError(error);
         setSubmissionError(
           "Ocurrió un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.",
