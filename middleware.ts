@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
     // Guarda la URL a la que intentaba acceder para redirigirlo después del login
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", request.nextUrl.pathname);
+    loginUrl.searchParams.set("reason", "unauthorized");
 
     return NextResponse.redirect(loginUrl);
   }

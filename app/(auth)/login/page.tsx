@@ -8,25 +8,32 @@ import {
   Label,
   Legend,
 } from "@headlessui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas";
 import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
+import InfoModal from "@/components/shared/InfoModal";
+import { useAuthStore } from "@/store/authStore";
 import { login } from "@/services/auth/authService";
-import { useRouter } from "next/navigation";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setIsAuthenticated: setIsAutenticated, getAuthStatus } =
+    useAuthStore();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoModalMessage, setInfoModalMessage] = useState("");
 
   const {
     register,
@@ -44,6 +51,27 @@ export default function LoginPage() {
   watch("password");
 
   const { handleAxiosError } = useAxiosErrorHandler();
+  const isAuthenticated = getAuthStatus();
+
+  useEffect(() => {
+    // Si el usuario ya está autenticado, no debería estar en la página de login.
+    // Lo redirigimos a su perfil. Usamos replace para no ensuciar el historial.
+    if (isAuthenticated) {
+      router.replace("/profile/me");
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+    const from = searchParams.get("from");
+    // Solo mostramos el modal si la razón es 'unauthorized' Y el usuario NO está autenticado.
+    if (reason === "unauthorized" && from && !isAuthenticated) {
+      setInfoModalMessage(
+        `Para acceder a todo el contenido de Knoword, primero debes iniciar sesión.`,
+      );
+      setShowInfoModal(true);
+    }
+  }, [searchParams, isAuthenticated]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
@@ -53,8 +81,10 @@ export default function LoginPage() {
 
     try {
       await login(data);
+
       // Si login() es exitoso (no lanza error), las cookies ya están seteadas.
       router.push("/profile/me");
+      setIsAutenticated(true);
     } catch (error: any) {
       if (
         error.response &&
@@ -158,6 +188,13 @@ export default function LoginPage() {
           message={submissionError}
           onClose={handleCloseErrorModal}
           onRetry={handleRetryConnection}
+        />
+      )}
+      {showInfoModal && (
+        <InfoModal
+          isOpen={showInfoModal}
+          message={infoModalMessage}
+          onClose={() => setShowInfoModal(false)}
         />
       )}
     </form>

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 // Provee acceso a el estado de autenticacion
 export const useAuth = () => {
-  const { isAuthenticated, accessToken } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, router]);
 
-  return { isAuthenticated, accessToken };
+  return { isAuthenticated };
 };
 
 // Protege rutas redirigiendo a usuarios no autenticados
