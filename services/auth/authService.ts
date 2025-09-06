@@ -6,6 +6,16 @@ import privateApiClient from "../client/privateApiClient";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+interface CheckEmailResponse {
+  available: boolean;
+  message: string;
+}
+
+interface CheckUsernameResponse {
+  available: boolean;
+  message: string;
+}
+
 /**
  * Realiza la llamada a la API de login.
  * No maneja cambios de estado ni captura errores. Simplemente realiza la petición.
@@ -43,4 +53,34 @@ export const logout = async () => {
   }
 };
 
-// Otros servicios de autenticación como register, forgotPassword, etc. irían aquí.
+export const checkEmail = async (
+  email: string,
+): Promise<CheckEmailResponse> => {
+  try {
+    const response = await publicApiClient.get(
+      `/auth/check-email?email=${email}`,
+    );
+    // La respuesta esperada es un objeto con la propiedad 'data' que a su vez contiene 'available' y 'message'.
+    // Se devuelve el objeto completo para que el llamador pueda acceder a ambas propiedades.
+    return response.data;
+  } catch (error) {
+    console.error("Error checking email availability:", error);
+    // En caso de error, se puede lanzar el error o devolver un objeto con un mensaje de error.
+    // Aquí se lanza el error para que el llamador lo maneje.
+    throw error;
+  }
+};
+
+export const checkUsername = async (
+  username: string,
+): Promise<CheckUsernameResponse> => {
+  try {
+    const response = await publicApiClient.get(
+      `/auth/check-username?username=${username}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error checking username availability:", error);
+    throw error;
+  }
+};

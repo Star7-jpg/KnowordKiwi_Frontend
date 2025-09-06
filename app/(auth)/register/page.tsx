@@ -20,6 +20,7 @@ import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
 import { debounce } from "lodash";
 import { Eye, EyeOff } from "lucide-react";
+import { checkEmail, checkUsername } from "@/services/auth/authService";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -54,7 +55,11 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    // `onTouched` valida en el primer blur para errores de formato.
+    // `reValidateMode: 'onSubmit'` evita que se re-valide en cada cambio,
+    // lo que previene que el error de disponibilidad que establecimos manualmente sea borrado.
     mode: "onTouched",
+    reValidateMode: "onSubmit",
   });
 
   const email = watch("email");
@@ -80,18 +85,15 @@ export default function RegisterPage() {
       }
       setIsEmailChecking(true);
       try {
-        const response = await publicApiClient.post(
-          "http://localhost:8000/api/check-email/",
-          { email },
-        );
-        if (response.data.available) {
+        const response = await checkEmail(email);
+        if (response.available) {
           setIsEmailAvailable(true);
           clearErrors("email");
         } else {
           setIsEmailAvailable(false);
           setError("email", {
             type: "manual",
-            message: response.data.error || "Este correo ya está en uso.",
+            message: response.message,
           });
         }
       } catch (error) {
@@ -105,7 +107,7 @@ export default function RegisterPage() {
       } finally {
         setIsEmailChecking(false);
       }
-    }, 500), // Esperar 500ms antes de hacer la petición
+    }, 1000), // Esperar 500ms antes de hacer la petición
     [setError, clearErrors],
   );
 
@@ -128,11 +130,9 @@ export default function RegisterPage() {
       }
       setIsUsernameChecking(true);
       try {
-        const response = await publicApiClient.post(
-          "http://localhost:8000/api/check-username/",
-          { username },
-        );
-        if (response.data.available) {
+        const response = await checkUsername(username);
+        console.log(response);
+        if (response.available) {
           setIsUsernameAvailable(true);
           clearErrors("username");
         } else {
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           setError("username", {
             type: "manual",
             message:
-              response.data.error || "Este nombre de usuario ya está en uso.",
+              response.message || "Este nombre de usuario ya está en uso.",
           });
         }
       } catch (error) {
@@ -153,7 +153,7 @@ export default function RegisterPage() {
       } finally {
         setIsUsernameChecking(false);
       }
-    }, 500), // Debounce de 500ms
+    }, 1000), // Debounce de 500ms
     [setError, clearErrors],
   );
 
