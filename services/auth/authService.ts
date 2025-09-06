@@ -1,10 +1,11 @@
 import publicApiClient from "../client/publicApiClient";
 import { useAuthStore } from "@/store/authStore";
 import { z } from "zod";
-import { loginSchema } from "@/app/(auth)/schemas";
+import { loginSchema, registerSchema } from "@/app/(auth)/schemas";
 import privateApiClient from "../client/privateApiClient";
 
 type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 interface CheckEmailResponse {
   available: boolean;
@@ -14,6 +15,11 @@ interface CheckEmailResponse {
 interface CheckUsernameResponse {
   available: boolean;
   message: string;
+}
+
+interface ConfirmAccountResponse {
+  message: string;
+  error: string;
 }
 
 /**
@@ -81,6 +87,28 @@ export const checkUsername = async (
     return response.data;
   } catch (error) {
     console.error("Error checking username availability:", error);
+    throw error;
+  }
+};
+
+export const registerUser = async (data: RegisterFormData) => {
+  try {
+    const response = await publicApiClient.post("/auth/register", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error registering user:", error);
+    throw error;
+  }
+};
+
+export const confirmEmail = async (token: string): Promise<ConfirmAccountResponse> => {
+  try {
+    const response = await publicApiClient.get(
+      `/auth/confirm-email?token=${token}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error confirming email:", error);
     throw error;
   }
 };

@@ -10,8 +10,8 @@ import {
   Textarea,
   Transition,
 } from "@headlessui/react";
-import publicApiClient from "@/services/client/publicApiClient";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { registerSchema } from "../schemas";
@@ -20,17 +20,24 @@ import { useAxiosErrorHandler } from "@/hooks/useAxiosErrorHandler";
 import ErrorModal from "@/components/shared/ErrorModal";
 import { debounce } from "lodash";
 import { Eye, EyeOff } from "lucide-react";
-import { checkEmail, checkUsername } from "@/services/auth/authService";
+import {
+  checkEmail,
+  checkUsername,
+  registerUser,
+} from "@/services/auth/authService";
+import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const { handleAxiosError } = useAxiosErrorHandler();
 
   //Estados para validacion asíncrona
@@ -50,6 +57,7 @@ export default function RegisterPage() {
     handleSubmit,
     trigger,
     watch,
+    setValue,
     setError,
     clearErrors,
     formState: { errors },
@@ -209,23 +217,45 @@ export default function RegisterPage() {
 
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
-  // En el último paso, enviar todo el formulario
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const localURL = URL.createObjectURL(file);
+    setAvatarPreview(localURL);
+    setIsUploadingAvatar(true);
+    setAvatarError(null);
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(file);
+      setValue("avatar", cloudinaryUrl, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    } catch (error) {
+      console.error("Error al subir la imagen de avatar:", error);
+      setAvatarError(
+        "No se pudo subir la imagen de avatar. Inténtalo de nuevo.",
+      );
+      setAvatarPreview(null);
+      setValue("avatar", "", {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
     setSubmissionError(null);
-    const dataSnakeCase = snakecaseKeys(data, { deep: true });
     try {
-      const response = await publicApiClient.post(
-        "http://localhost:8000/api/register/",
-        dataSnakeCase,
-      );
-      console.log("Registro exitoso:", response.data);
-      // Redirigir al usuario a la página de verificación de correo
+      console.log(data);
+      await registerUser(data);
       router.push("/verify-account");
     } catch (error) {
       handleAxiosError(error);
       console.error("Error en el registro:", error);
-      // Manejar errores de envío
       setSubmissionError(
         "Hubo un problema al conectar con nuestros servidores. Por favor, revisa tu conexión a internet e inténtalo de nuevo.",
       );
@@ -432,40 +462,41 @@ export default function RegisterPage() {
 
                 <input
                   type="file"
-                  name="avatar"
                   id="avatar"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setAvatar(reader.result as string);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
+                  onChange={handleImageUpload}
                   ref={fileInputRef}
+                  disabled={isUploadingAvatar}
                 />
 
                 <Button
                   type="button"
-                  className="px-4 py-2 mt-4 bg-accent text-white rounded hover:bg-accent-hover transition duration-150 ease-in-out"
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                  }}
+                  className="px-4 py-2 mt-4 bg-accent text-white rounded hover:bg-accent-hover transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
                 >
-                  {avatar ? "Cambiar foto" : "Subir foto"}
+                  {isUploadingAvatar
+                    ? "Subiendo..."
+                    : avatarPreview
+                      ? "Cambiar foto"
+                      : "Subir foto"}
                 </Button>
-                {avatar && (
-                  <div className="w-full flex justify-center">
-                    <img
-                      src={avatar}
+                {avatarPreview && (
+                  <div className="w-full flex justify-center mt-4">
+                    <Image
+                      src={avatarPreview}
+                      width={64}
+                      height={64}
                       alt="Avatar preview"
-                      className="mt-2 w-16 h-16 rounded-full object-cover inline-block "
+                      className="w-16 h-16 rounded-full object-cover"
                     />
                   </div>
+                )}
+                {avatarError && (
+                  <p className="text-red-500 font-light text-sm mt-2 text-center">
+                    {avatarError}
+                  </p>
                 )}
               </Field>
               <Field>
