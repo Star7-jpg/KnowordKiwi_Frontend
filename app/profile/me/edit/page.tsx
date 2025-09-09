@@ -13,30 +13,25 @@ import {
 import { Avatar } from "@/components/ui/userProfile/Avatar";
 import { Pencil } from "lucide-react";
 import { profileSchema } from "../../schemas";
-import { useAuthStore } from "@/store/authStore";
-import privateApiClient from "@/services/client/privateApiClient";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
+import { getMe, updateUserData } from "@/services/users/userServices";
+import { User } from "@/types/users/user";
+import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfileEditor() {
+  const [loading, setLoading] = useState(false);
+  const [errorFetchingProfile, setErrorFetchingProfile] = useState<
+    string | null
+  >(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // Para abrir o cerrar el modal
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
-
-  const initialProfileData: ProfileFormData = {
-    real_name: user?.real_name || "",
-    email: user?.email || "",
-    username: user?.username || "",
-    bio: user?.bio || "",
-    avatar_url: user?.avatar_url || "",
-  };
 
   const {
     register,
@@ -47,19 +42,38 @@ export default function ProfileEditor() {
     reset,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: initialProfileData,
     mode: "onTouched",
   });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await getMe();
+        setUser(response.user);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setErrorFetchingProfile(
+          "No pudimos cargar tu perfil. Inténtalo más tarde.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    // Cuando los datos del usuario se cargan, actualizamos los valores del formulario.
     if (user) {
       reset({
-        real_name: user.real_name || "",
+        realName: user.realName || "",
         email: user.email || "",
         username: user.username || "",
         bio: user.bio || "",
+        avatar: user.avatar || "",
       });
-      setAvatarPreview(user.avatar_url || null);
+      setAvatarPreview(user.avatar || null);
     }
   }, [user, reset]);
 
@@ -75,12 +89,13 @@ export default function ProfileEditor() {
     if (isEditing) {
       if (user) {
         reset({
-          real_name: user.real_name || "",
+          realName: user.realName || "",
           email: user.email || "",
           username: user.username || "",
           bio: user.bio || "",
+          avatar: user.avatar || "",
         });
-        setAvatarPreview(user.avatar_url || null);
+        setAvatarPreview(user.avatar || null);
         setSubmissionError(null);
       }
     }
@@ -98,7 +113,7 @@ export default function ProfileEditor() {
     setSubmissionError(null);
     try {
       const cloudinaryUrl = await uploadToCloudinary(file);
-      setValue("avatar_url", cloudinaryUrl, {
+      setValue("avatar", cloudinaryUrl, {
         shouldValidate: true,
         shouldDirty: true, // Hara que el campo se incluya en la validacion de isDirty
       });
@@ -107,8 +122,8 @@ export default function ProfileEditor() {
       setSubmissionError(
         "No se pudo subir la imagen de avatar. Inténtalo de nuevo.",
       );
-      setAvatarPreview(user?.avatar_url || null);
-      setValue("avatar_url", user?.avatar_url, {
+      setAvatarPreview(user?.avatar || null);
+      setValue("avatar", user?.avatar ?? undefined, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -121,13 +136,11 @@ export default function ProfileEditor() {
     setIsSubmitting(true);
     const updatedData = {
       ...data,
-      avatar_url: getValues("avatar_url"),
+      avatar: getValues("avatar"),
     };
-    console.log(updatedData);
     try {
-      const response = await privateApiClient.patch("/me/", updatedData);
-      setUser(response.data);
-      console.log(response.data);
+      const response = await updateUserData(updatedData);
+      setUser(response.user);
       setIsEditing(false); // Salir del modo edición
       openModal();
     } catch (error) {
@@ -139,6 +152,18 @@ export default function ProfileEditor() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (errorFetchingProfile) {
+    return <ErrorMessageScreen error={errorFetchingProfile} />;
+  }
 
   return (
     <div className="min-h-screen w-full p-6 sm:p-8">
@@ -195,7 +220,7 @@ export default function ProfileEditor() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8">
           <div>
             <label
-              htmlFor="real_name"
+              htmlFor="realName"
               className="block text-gray-400 text-sm mb-2"
             >
               Nombre Completo
@@ -204,22 +229,22 @@ export default function ProfileEditor() {
               <>
                 <input
                   type="text"
-                  id="real_name"
-                  {...register("real_name")}
+                  id="realName"
+                  {...register("realName")}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                    errors.real_name
+                    errors.realName
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500"
                   }`}
                 />
-                {errors.real_name && (
+                {errors.realName && (
                   <p className="mt-1 text-sm text-red-500">
-                    {errors.real_name.message}
+                    {errors.realName.message}
                   </p>
                 )}
               </>
             ) : (
-              <p className="font-medium">{user?.real_name}</p>
+              <p className="font-medium">{user?.realName}</p>
             )}
           </div>
 
