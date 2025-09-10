@@ -16,12 +16,10 @@ export const updateUserData = async (
   data: ProfileFormData,
 ): Promise<UserProfileResponse> => {
   try {
-    console.log(data);
     const response = await privateApiClient.patch<UserProfileResponse>(
       "/users/me",
       data,
     );
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error("Error updating user data:", error);

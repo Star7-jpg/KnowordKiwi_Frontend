@@ -1,6 +1,13 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
+import {
+  Field,
+  Fieldset,
+  Input,
+  Label,
+  Legend,
+  Switch,
+} from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,31 +15,31 @@ import { z } from "zod";
 import { createCommunitySchema } from "../schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import privateApiClient from "@/services/client/privateApiClient";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 import debounce from "lodash/debounce";
 import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
 import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
+import {
+  createCommunity,
+  getTagRecommendations,
+} from "@/services/community/communityServices";
 
 type CreateCommunityPageData = z.infer<typeof createCommunitySchema>;
-
-type TagsResponse = {
-  name: string;
-};
 
 export default function CreateCommunityPage() {
   const [communityId, setCommunityId] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const maxTags = 5;
   const router = useRouter();
   const {
@@ -88,11 +95,8 @@ export default function CreateCommunityPage() {
       }
       setIsSearching(true);
       try {
-        const response = await privateApiClient.get<TagsResponse[]>(
-          `/communities/tags/suggestions?q=${query}`,
-        );
-        console.log(response);
-        const newSuggestions = response.data
+        const response = await getTagRecommendations(query);
+        const newSuggestions = response
           .filter((s) => !selectedTags.includes(s.name.toLowerCase()))
           .map((s) => s.name);
         setSuggestions(newSuggestions);
@@ -102,7 +106,7 @@ export default function CreateCommunityPage() {
       } finally {
         setIsSearching(false);
       }
-    }, 300),
+    }, 1000),
     [selectedTags],
   );
 
@@ -152,10 +156,7 @@ export default function CreateCommunityPage() {
     const communityData = { ...data, tags: selectedTags };
     console.log(communityData);
     try {
-      const response = await privateApiClient.post(
-        "/communities/",
-        communityData,
-      );
+      const response = await createCommunity(communityData);
       console.log("Comunidad creada:", response.data);
       setIsSubmitCorrect(true);
       setCommunityId(response.data.id);
@@ -201,7 +202,7 @@ export default function CreateCommunityPage() {
             )}
           </Field>
 
-          <Field>
+          <Field className="mb-6">
             <Label className="block text-sm font-medium mb-1 text-white">
               Descripción de la comunidad
             </Label>
@@ -216,6 +217,21 @@ export default function CreateCommunityPage() {
                 {errors.description.message}
               </p>
             )}
+          </Field>
+          <Field className="mb-6">
+            <Label className="block text-sm font-medium mb-1 text-white">
+              Privacidad de la comunidad.
+            </Label>
+            <Switch
+              checked={isPrivate}
+              onChange={setIsPrivate}
+              className="group inline-flex h-6 w-11 mt-2 items-center rounded-full bg-gray-700 transition data-checked:bg-primary"
+            >
+              <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
+            </Switch>
+            <div className="mt-2 text-sm font-medium text-white">
+              {isPrivate && ()}
+            </div>
           </Field>
         </Fieldset>
 
