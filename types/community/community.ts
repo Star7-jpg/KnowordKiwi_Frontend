@@ -1,22 +1,18 @@
-export type Community = {
+import { Tag } from "./communityTag";
+
+export interface Community {
   id: string;
   name: string;
   description: string;
   avatar: string | null;
   banner: string | null;
-  is_private: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  read_tags: ReadTag[];
-  is_member: boolean;
-  is_owner: boolean;
-  can_edit: boolean;
-  member_count: number;
-};
-
-type ReadTag = {
-  id: string;
-  name: string;
-};
+  isPrivate: boolean;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  tags: Tag[];
+  _count: {
+    members: number;
+  };
+}

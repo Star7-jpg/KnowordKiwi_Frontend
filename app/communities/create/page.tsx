@@ -153,13 +153,13 @@ export default function CreateCommunityPage() {
   async function submitCreateCommunityForm(data: CreateCommunityPageData) {
     setIsSubmitting(true);
     setSubmissionError(null);
-    const communityData = { ...data, tags: selectedTags };
+    const communityData = { ...data, isPrivate, tags: selectedTags };
     console.log(communityData);
     try {
       const response = await createCommunity(communityData);
-      console.log("Comunidad creada:", response.data);
+      console.log("Comunidad creada:", response);
       setIsSubmitCorrect(true);
-      setCommunityId(response.data.id);
+      setCommunityId(response.id);
     } catch (error) {
       console.error("Error al crear la comunidad:", error);
       setSubmissionError(
@@ -225,12 +225,21 @@ export default function CreateCommunityPage() {
             <Switch
               checked={isPrivate}
               onChange={setIsPrivate}
-              className="group inline-flex h-6 w-11 mt-2 items-center rounded-full bg-gray-700 transition data-checked:bg-primary"
+              className="group inline-flex h-6 w-11 mt-2 items-center rounded-full bg-gray-700 transition data-checked:bg-secondary"
             >
               <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
             </Switch>
             <div className="mt-2 text-sm font-medium text-white">
-              {isPrivate && ()}
+              {isPrivate && (
+                <p className="text-sm text-text-error">
+                  La comunidad será privada, solo podrás invitar a miembros
+                  mediante un enlace de confirmación
+                </p>
+              )}
+              <p className="text-sm text-gray-400">
+                {!isPrivate &&
+                  "La comunidad será pública, es decir que cualquiera puede unirse y ver su contenido."}
+              </p>
             </div>
           </Field>
         </Fieldset>

@@ -1,13 +1,15 @@
 "use client";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-import privateApiClient from "@/services/client/privateApiClient";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Community } from "@/types/community/community";
+import { exploreCommunities } from "@/services/community/communityServices";
+import { Community } from "@/types/community";
 
 interface CategoryData {
-  tag: string;
+  id: string;
+  name: string;
+  createdAt: string;
   communities: Community[];
 }
 
@@ -19,9 +21,9 @@ export default function ExploreCommunitiesPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await privateApiClient("explore/");
-        const data: CategoryData[] = response.data;
-        setCategoriesData(data);
+        const response = await exploreCommunities();
+        console.log(response);
+        setCategoriesData(response);
       } catch (err) {
         console.error("Error fetching categories:", err);
         setError(
@@ -37,9 +39,9 @@ export default function ExploreCommunitiesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen text-white p-6 flex items-center justify-center">
-        <p>Cargando comunidades...</p>
-      </main>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
@@ -57,10 +59,10 @@ export default function ExploreCommunitiesPage() {
           <div key={index}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl md:text-2xl font-semibold capitalize">
-                {category.tag.charAt(0).toUpperCase() + category.tag.slice(1)}
+                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
               </h2>
               <Link
-                href={`/communities/${category.tag.toLowerCase()}`}
+                href={`/communities/${category.name.toLowerCase()}`}
                 className="text-sm text-gray-400 hover:text-terciary transition-colors duration-200"
               >
                 Ver todo →
