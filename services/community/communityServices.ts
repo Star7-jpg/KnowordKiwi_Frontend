@@ -35,3 +35,15 @@ export const exploreCommunities = async () => {
     throw error;
   }
 };
+
+export const getCommunityById = async (communityId: number) => {
+  try {
+    const response = await privateApiClient.get(
+      `/communities/community/${communityId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching community:", error);
+    throw error;
+  }
+};

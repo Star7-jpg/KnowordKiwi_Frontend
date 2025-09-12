@@ -12,7 +12,5 @@ export interface Community {
   updatedAt: string;
   deletedAt: string | null;
   tags: Tag[];
-  _count: {
-    members: number;
-  };
+  memberCount: number;
 }

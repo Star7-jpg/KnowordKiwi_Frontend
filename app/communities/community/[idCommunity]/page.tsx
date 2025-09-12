@@ -10,22 +10,20 @@ import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { Community } from "@/types/community/community";
 import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
 import JoinCommunitySuccessModal from "@/components/modals/JoinCommunitySuccessModal";
+import { getCommunityById } from "@/services/community/communityServices";
 
-async function getCommunityById(communityId: string): Promise<Community> {
-  try {
-    const response = await privateApiClient.get(`communities/${communityId}/`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching community:", error);
-    throw error;
-  }
+interface CommunityWithOwnership extends Community {
+  isOwner: boolean;
+  isMember: boolean;
 }
 
 export default function CommunityDetail() {
   const params = useParams();
-  const communityId = params.idCommunity as string;
+  const communityId = params.idCommunity as unknown as number;
 
-  const [community, setCommunity] = useState<Community | null>(null);
+  const [community, setCommunity] = useState<CommunityWithOwnership | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
@@ -44,6 +42,7 @@ export default function CommunityDetail() {
       setError(null);
       try {
         const data = await getCommunityById(communityId);
+        console.log(data);
         setCommunity(data);
       } catch (err) {
         setError("No se pudo cargar la comunidad. Inténtalo más tarde.");
@@ -61,7 +60,7 @@ export default function CommunityDetail() {
       setIsJoining(true);
       await privateApiClient.post(`/communities/${communityId}/join/`);
       setIsJoined(true);
-      setCommunity((prev) => (prev ? { ...prev, is_member: true } : null));
+      setCommunity((prev) => (prev ? { ...prev, isMember: true } : null));
     } catch (err) {
       console.error("Error joining community:", err);
       setError("Hubo un error al unirse a la comunidad. Inténtalo más tarde.");
@@ -163,7 +162,7 @@ export default function CommunityDetail() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {community.name}
                 </h1>
-                {community.is_private ? (
+                {community.isPrivate ? (
                   <Lock className="w-5 h-5 text-yellow-500" />
                 ) : (
                   <Globe className="w-5 h-5 text-blue-500" />
@@ -178,7 +177,7 @@ export default function CommunityDetail() {
 
           {/* Etiquetas */}
           <div className="flex flex-wrap gap-2 mt-6">
-            {community.read_tags.map((tag) => (
+            {community.tags.map((tag) => (
               <span
                 key={tag.id}
                 className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
@@ -189,7 +188,7 @@ export default function CommunityDetail() {
             ))}
           </div>
 
-          {community.is_owner && (
+          {community.isOwner && (
             <p className="text-terciary italic mt-8">
               ¡Eres dueño de esta comunidad! Puedes editar su información o
               incluso eliminarla.
@@ -198,7 +197,7 @@ export default function CommunityDetail() {
 
           <div className="flex gap-3 flex-wrap mt-4">
             {/* Botón de Unirse: solo si no es miembro ni dueño */}
-            {!community.is_owner && !community.is_member && (
+            {!community.isOwner && !community.isMember && (
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 onClick={handleJoin}
@@ -208,14 +207,14 @@ export default function CommunityDetail() {
             )}
 
             {/* Botón de Salir: si es miembro pero no dueño */}
-            {!community.is_owner && community.is_member && (
+            {!community.isOwner && community.isMember && (
               <button className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
                 Salir
               </button>
             )}
 
             {/* Acciones del dueño */}
-            {community.is_owner && (
+            {community.isOwner && (
               <>
                 <Link
                   href={`/communities/community/${community.id}/editar`}
@@ -247,7 +246,7 @@ export default function CommunityDetail() {
                   Creada
                 </p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {formatDate(community.created_at)}
+                  {formatDate(community.createdAt)}
                 </p>
               </div>
             </div>
@@ -259,7 +258,7 @@ export default function CommunityDetail() {
                   Miembros
                 </p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {community.member_count} miembros
+                  {community.memberCount} miembros
                 </p>
               </div>
             </div>

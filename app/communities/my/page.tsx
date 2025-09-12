@@ -131,7 +131,7 @@ export default function UserCommunitiesList() {
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
                       {community.name}
                     </h3>
-                    {community.is_private && (
+                    {community.isPrivate && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                         Privada
                       </span>
