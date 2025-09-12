@@ -7,15 +7,10 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-import { Community } from "@/types/community/community";
 import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
 import JoinCommunitySuccessModal from "@/components/modals/JoinCommunitySuccessModal";
 import { getCommunityById } from "@/services/community/communityServices";
-
-interface CommunityWithOwnership extends Community {
-  isOwner: boolean;
-  isMember: boolean;
-}
+import { CommunityWithOwnership } from "@/types/community";
 
 export default function CommunityDetail() {
   const params = useParams();

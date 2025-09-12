@@ -47,3 +47,16 @@ export const getCommunityById = async (communityId: number) => {
     throw error;
   }
 };
+
+export const updateCommunity = async (communityId: number, communityData) => {
+  try {
+    const response = await privateApiClient.patch(
+      `/communities/community/${communityId}`,
+      communityData,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating community:", error);
+    throw error;
+  }
+};

@@ -6,26 +6,26 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCommunitySchema } from "@/app/communities/schemas";
-import privateApiClient from "@/services/client/privateApiClient";
 import debounce from "lodash/debounce";
 import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
-import { Community } from "@/types/community/community";
 import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
 import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
-
-type TagsResponse = {
-  name: string;
-};
+import {
+  getCommunityById,
+  getTagRecommendations,
+  updateCommunity,
+} from "@/services/community/communityServices";
+import { Community, Tag } from "@/types/community";
 
 type FormData = z.infer<typeof createCommunitySchema>;
 
 export default function CommunityEditForm() {
   const params = useParams();
   const router = useRouter();
-  const communityId = params.idCommunity as string;
+  const communityId = params.idCommunity as unknown as number;
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -56,10 +56,8 @@ export default function CommunityEditForm() {
   useEffect(() => {
     const fetchCommunity = async () => {
       try {
-        const response = await privateApiClient.get<Community>(
-          `communities/${communityId}/`,
-        );
-        const data = response.data;
+        const data = await getCommunityById(communityId);
+        console.log(data);
         setCommunity(data);
         setValue("name", data.name);
         setValue("description", data.description);
@@ -71,7 +69,7 @@ export default function CommunityEditForm() {
           setAvatarPreview(data.avatar);
           setValue("avatar", data.avatar);
         }
-        setSelectedTags(data.read_tags.map((tag) => tag.name.toLowerCase()));
+        setSelectedTags(data.tags.map((tag: Tag) => tag.name.toLowerCase()));
       } catch (err) {
         setError("No se pudo cargar la comunidad.");
         console.error(err);
@@ -94,7 +92,7 @@ export default function CommunityEditForm() {
       banner: data.banner,
     };
     try {
-      await privateApiClient.patch(`/communities/${communityId}/`, payload);
+      await updateCommunity(communityId, payload);
       setIsSubmitCorrect(true);
     } catch (err: any) {
       setSubmissionError(
@@ -172,10 +170,8 @@ export default function CommunityEditForm() {
       }
       setIsSearching(true);
       try {
-        const response = await privateApiClient.get<TagsResponse[]>(
-          `/communities/tags/suggestions?q=${query}`,
-        );
-        const newSuggestions = response.data
+        const response = await getTagRecommendations(query);
+        const newSuggestions = response
           .filter((s) => !selectedTags.includes(s.name.toLowerCase()))
           .map((s) => s.name);
         setSuggestions(newSuggestions);
