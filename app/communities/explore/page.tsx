@@ -6,7 +6,7 @@ import Image from "next/image";
 import { exploreCommunities } from "@/services/community/communityServices";
 import { Community } from "@/types/community";
 
-interface CategoryData {
+interface TagRelatedToCommunities {
   id: string;
   name: string;
   createdAt: string;
@@ -14,7 +14,9 @@ interface CategoryData {
 }
 
 export default function ExploreCommunitiesPage() {
-  const [categoriesData, setCategoriesData] = useState<CategoryData[]>([]);
+  const [tagToCommunitiesData, setTagToCommunitiesData] = useState<
+    TagRelatedToCommunities[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,12 +24,9 @@ export default function ExploreCommunitiesPage() {
     async function fetchCategories() {
       try {
         const response = await exploreCommunities();
-        const filteredCategories = response.filter(
-          (category: CategoryData) => category.communities.length > 0,
-        );
-        setCategoriesData(filteredCategories);
+        setTagToCommunitiesData(response);
       } catch (err) {
-        console.error("Error fetching categories:", err);
+        console.error("Error fetching tags:", err);
         setError(
           "Hubo un error al cargar las comunidades. Intenta de nuevo más tarde.",
         );
@@ -57,21 +56,21 @@ export default function ExploreCommunitiesPage() {
         Explorar Comunidades 🌍
       </h1>
       <div className="space-y-12">
-        {categoriesData.map((category, index) => (
+        {tagToCommunitiesData.map((tag, index) => (
           <div key={index}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl md:text-2xl font-semibold capitalize">
-                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
               </h2>
               <Link
-                href={`/communities/${category.name.toLowerCase()}`}
+                href={`/communities/${tag.name.toLowerCase()}`}
                 className="text-sm text-gray-400 hover:text-terciary transition-colors duration-200"
               >
                 Ver todo →
               </Link>
             </div>
             <div className="flex overflow-x-auto gap-4 p-2 -m-2 custom-scrollbar">
-              {category.communities.map((community, idx) => (
+              {tag.communities.map((community, idx) => (
                 <Link
                   href={`/communities/community/${community.id}`}
                   key={idx}

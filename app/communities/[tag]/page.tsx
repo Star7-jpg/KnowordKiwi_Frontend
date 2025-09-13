@@ -1,30 +1,11 @@
-import privateApiClient from "@/services/client/privateApiClient";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Community } from "@/types/community/community";
 
-async function getCommunitiesByCategory(
-  category: string,
-): Promise<Community[]> {
-  try {
-    const response = await privateApiClient(`communities/tag/${category}/`);
-    console.log(response.data);
-    return await response.data;
-  } catch (error) {
-    console.error("Error fetching communities:", error);
-    // Podrías retornar un array vacío o manejar el error de otra forma
-    return [];
-  }
-}
-
-export default async function CategoryPage({
-  params,
-}: {
-  params: { category: string };
-}) {
-  const categoryForApi = params.category;
-  const communities = await getCommunitiesByCategory(categoryForApi);
-  const displayCategory = decodeURIComponent(params.category);
+export default async function TagPage({ params }: { params: { tag: string } }) {
+  const tagForApi = params.tag;
+  const communities = await getCommunitiesByCategory(tagForApi);
+  const displayTag = decodeURIComponent(params.tag);
 
   // Si no hay comunidades para esta categoría, mostramos notFound
   if (communities.length === 0) {
@@ -43,7 +24,7 @@ export default async function CategoryPage({
   return (
     <main className="min-h-screen text-white p-6">
       <h1 className="text-2xl font-bold mb-6 capitalize">
-        Comunidades de {displayCategory}
+        Comunidades de {displayTag}
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
