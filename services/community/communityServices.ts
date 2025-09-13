@@ -60,3 +60,12 @@ export const updateCommunity = async (communityId: number, communityData) => {
     throw error;
   }
 };
+
+export const deleteCommunity = async (communityId: string) => {
+  try {
+    await privateApiClient.delete(`/communities/community/${communityId}`);
+  } catch (error) {
+    console.log("Error deleting community:", error);
+    throw error;
+  }
+};

@@ -1,5 +1,5 @@
 "use client";
-import privateApiClient from "@/services/client/privateApiClient";
+import { deleteCommunity } from "@/services/community/communityServices";
 import {
   Dialog,
   DialogPanel,
@@ -43,7 +43,7 @@ export default function DeleteCommunityModal({
 
     setIsDeleting(true);
     try {
-      await privateApiClient.delete(`/communities/${communityId}/`);
+      await deleteCommunity(communityId);
       setIsDeleting(false);
       setIsDeleted(true);
 
@@ -54,7 +54,6 @@ export default function DeleteCommunityModal({
     } catch (error) {
       console.error("Error al eliminar la comunidad:", error);
       setIsDeleting(false);
-      // Aquí podrías manejar errores con un mensaje de fallo si lo deseas
       setError(
         "Hubo un error al eliminar la comunidad. Por favor, inténtalo de nuevo.",
       );
