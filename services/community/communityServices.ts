@@ -1,4 +1,10 @@
 import privateApiClient from "../client/privateApiClient";
+import publicApiClient from "../client/publicApiClient";
+import {
+  Community,
+  CommunityCreateData,
+  CommunityUpdateData,
+} from "@/types/community";
 
 export const getTagRecommendations = async (query: string) => {
   try {
@@ -11,8 +17,8 @@ export const getTagRecommendations = async (query: string) => {
     throw error;
   }
 };
-// TODO: Definir un tipo para communityData
-export const createCommunity = async (communityData) => {
+
+export const createCommunity = async (communityData: CommunityCreateData) => {
   try {
     const response = await privateApiClient.post(
       "/communities/create",
@@ -48,7 +54,22 @@ export const getCommunityById = async (communityId: number) => {
   }
 };
 
-export const updateCommunity = async (communityId: number, communityData) => {
+export const getCommunitiesByTag = async (
+  tag: string,
+): Promise<Community[]> => {
+  try {
+    const response = await publicApiClient.get(`/communities/by-tag/${tag}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching communities by tag:", error);
+    throw error;
+  }
+};
+
+export const updateCommunity = async (
+  communityId: number,
+  communityData: CommunityUpdateData,
+) => {
   try {
     const response = await privateApiClient.patch(
       `/communities/community/${communityId}`,
