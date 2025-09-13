@@ -40,6 +40,7 @@ export default function CommunityEditForm() {
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tagError, setTagError] = useState<string | null>(null);
   const maxTags = 5;
 
   const {
@@ -109,11 +110,11 @@ export default function CommunityEditForm() {
     const newTag = tag.trim().toLowerCase();
     if (!newTag) return;
     if (selectedTags.includes(newTag)) {
-      alert("Esta etiqueta ya ha sido agregada.");
+      setTagError("La etiqueta ya está seleccionada.");
       return;
     }
     if (selectedTags.length >= maxTags) {
-      alert(`Solo puedes agregar hasta ${maxTags} etiquetas.`);
+      setTagError(`Solo puedes agregar hasta ${maxTags} etiquetas.`);
       return;
     }
     setSelectedTags((prev) => [...prev, newTag]);
@@ -164,6 +165,7 @@ export default function CommunityEditForm() {
 
   const fetchTagSuggestions = useCallback(
     debounce(async (query: string) => {
+      setTagError(null);
       if (query.length < 2) {
         setSuggestions([]);
         return;
@@ -333,6 +335,8 @@ export default function CommunityEditForm() {
               Has alcanzado el máximo de {maxTags} etiquetas.
             </p>
           )}
+
+          {tagError && <p className="text-error text-sm mt-2">{tagError}</p>}
         </Fieldset>
 
         {/* Imágenes */}

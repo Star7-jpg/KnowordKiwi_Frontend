@@ -40,6 +40,7 @@ export default function CreateCommunityPage() {
   const [isSubmitCorrect, setIsSubmitCorrect] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
   const maxTags = 5;
   const router = useRouter();
   const {
@@ -89,6 +90,7 @@ export default function CreateCommunityPage() {
 
   const fetchTagSuggestions = useCallback(
     debounce(async (query: string) => {
+      setTagError(null);
       if (query.length < 2) {
         setSuggestions([]);
         return;
@@ -128,7 +130,7 @@ export default function CreateCommunityPage() {
       setInputValue("");
       setSuggestions([]);
     } else if (selectedTags.includes(newTag)) {
-      alert("Esta etiqueta ya ha sido agregada.");
+      setTagError("Esta etiqueta ya ha sido agregada.");
     }
   };
 
@@ -310,6 +312,9 @@ export default function CreateCommunityPage() {
             <p className="text-sm text-gray-400 mt-2">
               Has agregado el máximo de {maxTags} etiquetas.
             </p>
+          )}
+          {tagError && (
+            <p className="text-text-error text-sm mt-2">{tagError}</p>
           )}
         </Fieldset>
 
