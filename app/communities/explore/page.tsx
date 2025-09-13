@@ -22,8 +22,10 @@ export default function ExploreCommunitiesPage() {
     async function fetchCategories() {
       try {
         const response = await exploreCommunities();
-        console.log(response);
-        setCategoriesData(response);
+        const filteredCategories = response.filter(
+          (category: CategoryData) => category.communities.length > 0,
+        );
+        setCategoriesData(filteredCategories);
       } catch (err) {
         console.error("Error fetching categories:", err);
         setError(
