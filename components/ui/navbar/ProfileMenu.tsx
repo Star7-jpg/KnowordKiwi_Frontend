@@ -14,7 +14,7 @@ import privateApiClient from "@/services/client/privateApiClient";
 export function ProfileMenu() {
   const logoutFromBackend = async () => {
     try {
-      await privateApiClient.post(`logout/`);
+      await privateApiClient.post(`/auth/logout`);
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }

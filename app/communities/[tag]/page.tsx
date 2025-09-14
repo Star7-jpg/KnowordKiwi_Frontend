@@ -5,6 +5,7 @@ import { getCommunitiesByTag } from "@/services/community/communityServices";
 import { useEffect, useState } from "react";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 export default function TagPage() {
   const params = useParams();
@@ -60,7 +61,8 @@ export default function TagPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
         {communities.map((community) => (
-          <div
+          <Link
+            href={`/communities/community/${community.id}`}
             key={community.id}
             className="bg-[#121212] rounded-xl overflow-hidden hover:bg-[#1f1f1f] hover:-translate-y-1 transition-all duration-300 hover:shadow-lg"
           >
@@ -147,7 +149,7 @@ export default function TagPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </main>

@@ -1,19 +1,14 @@
-// components/UserCommunitiesList.tsx
 "use client";
 
-import privateApiClient from "@/services/client/privateApiClient";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-import { Community } from "@/types/community/community";
-
-type CommunityWithMemberCount = Community & { member_count: number };
+import { Community } from "@/types/community";
+import { getMyCommunities } from "@/services/community/communityServices";
 
 export default function UserCommunitiesList() {
-  const [communities, setCommunities] = useState<CommunityWithMemberCount[]>(
-    [],
-  );
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +16,7 @@ export default function UserCommunitiesList() {
     const fetchCommunities = async () => {
       try {
         setLoading(true);
-        const response = await privateApiClient("communities/my-communities/");
-        const data: CommunityWithMemberCount[] = await response.data;
+        const data: Community[] = await getMyCommunities();
         setCommunities(data);
       } catch (err) {
         console.error("Error fetching communities:", err);
@@ -144,7 +138,7 @@ export default function UserCommunitiesList() {
 
                   {/* Etiquetas */}
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {community.read_tags.slice(0, 3).map((tag) => (
+                    {community.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag.id}
                         className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
@@ -152,15 +146,15 @@ export default function UserCommunitiesList() {
                         {tag.name}
                       </span>
                     ))}
-                    {community.read_tags.length > 3 && (
+                    {community.tags.length > 3 && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        +{community.read_tags.length - 3}
+                        +{community.tags.length - 3}
                       </span>
                     )}
                   </div>
 
                   <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                    <span>Creada: {formatDate(community.created_at)}</span>
+                    <span>Creada: {formatDate(community.createdAt)}</span>
                     <span className="inline-flex items-center">
                       <svg
                         className="w-4 h-4 mr-1"
@@ -170,8 +164,8 @@ export default function UserCommunitiesList() {
                       >
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
                       </svg>
-                      {community.member_count} miembro
-                      {community.member_count !== 1 ? "s" : ""}
+                      {community.memberCount} miembro
+                      {community.memberCount !== 1 ? "s" : ""}
                     </span>
                   </div>
                 </div>

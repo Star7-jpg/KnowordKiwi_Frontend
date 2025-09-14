@@ -66,6 +66,16 @@ export const getCommunitiesByTag = async (
   }
 };
 
+export const getMyCommunities = async () => {
+  try {
+    const response = await privateApiClient.get("/communities/my-communities");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching my communities:", error);
+    throw error;
+  }
+};
+
 export const updateCommunity = async (
   communityId: number,
   communityData: CommunityUpdateData,
