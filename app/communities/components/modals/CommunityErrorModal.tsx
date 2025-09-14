@@ -23,7 +23,7 @@ export default function CommunityErrorModal({
   const router = useRouter();
 
   const handleGoToCommunities = () => {
-    router.push("/communities");
+    router.push("/communities/explore");
     onClose(); // Cierra el modal al navegar
   };
 
@@ -74,7 +74,7 @@ export default function CommunityErrorModal({
                     onClick={handleGoToCommunities}
                     className="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-hover"
                   >
-                    Ir a comunidades
+                    Explorar comunidades
                   </button>
                 </div>
               </div>
