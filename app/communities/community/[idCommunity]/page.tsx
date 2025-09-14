@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Users, Calendar, Tag, Lock, Globe } from "lucide-react";
-import privateApiClient from "@/services/client/privateApiClient";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
 import JoinCommunitySuccessModal from "@/components/modals/JoinCommunitySuccessModal";
-import { getCommunityById } from "@/services/community/communityServices";
+import {
+  getCommunityById,
+  joinCommunity,
+} from "@/services/community/communityServices";
 import { CommunityWithOwnership } from "@/types/community";
 
 export default function CommunityDetail() {
@@ -37,7 +39,6 @@ export default function CommunityDetail() {
       setError(null);
       try {
         const data = await getCommunityById(communityId);
-        console.log(data);
         setCommunity(data);
       } catch (err) {
         setError("No se pudo cargar la comunidad. Inténtalo más tarde.");
@@ -53,7 +54,7 @@ export default function CommunityDetail() {
   const handleJoin = async () => {
     try {
       setIsJoining(true);
-      await privateApiClient.post(`/communities/${communityId}/join/`);
+      await joinCommunity(communityId);
       setIsJoined(true);
       setCommunity((prev) => (prev ? { ...prev, isMember: true } : null));
     } catch (err) {

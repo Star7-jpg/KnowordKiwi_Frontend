@@ -76,6 +76,18 @@ export const getMyCommunities = async () => {
   }
 };
 
+export const joinCommunity = async (communityId: number) => {
+  try {
+    const response = await privateApiClient.post(
+      `/communities/join/${communityId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error joining community:", error);
+    throw error;
+  }
+};
+
 export const updateCommunity = async (
   communityId: number,
   communityData: CommunityUpdateData,
