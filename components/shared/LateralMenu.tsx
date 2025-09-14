@@ -27,8 +27,8 @@ const navigation = [
 
 const communitySubmenu = [
   { name: "Explorar Comunidades", href: "/communities/explore" },
-  { name: "Mis Comunidades", href: "/communities/my" },
   { name: "Comunidades a las que pertenezco", href: "/communities/member" },
+  { name: "Mis Comunidades", href: "/communities/my" },
 ];
 
 export default function LateralMenu() {
