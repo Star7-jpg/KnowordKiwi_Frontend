@@ -6,13 +6,14 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
-import DeleteCommunityModal from "@/components/modals/DeleteCommunityModal";
-import JoinCommunitySuccessModal from "@/components/modals/JoinCommunitySuccessModal";
+import DeleteCommunityModal from "@/app/communities/components/modals/DeleteCommunityModal";
+import JoinCommunitySuccessModal from "@/app/communities/components/modals/JoinCommunitySuccessModal";
 import {
   getCommunityById,
   joinCommunity,
 } from "@/services/community/communityServices";
 import { CommunityWithOwnership } from "@/types/community";
+import LeaveCommunityModal from "../../components/modals/LeaveCommunityModal";
 
 export default function CommunityDetail() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function CommunityDetail() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false); // Para mostrar modal de confirmacion de salir de comunidad
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -204,7 +206,10 @@ export default function CommunityDetail() {
 
             {/* Botón de Salir: si es miembro pero no dueño */}
             {!community.isOwner && community.isMember && (
-              <button className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+              <button
+                onClick={() => setIsLeaving(true)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
                 Salir
               </button>
             )}
@@ -320,6 +325,16 @@ export default function CommunityDetail() {
           isOpen={isJoined}
           onClose={() => setIsJoined(false)}
           communityName={community.name}
+        />
+      )}
+
+      {/* Modal de confirmación de salir de la comunidad */}
+      {isLeaving && (
+        <LeaveCommunityModal
+          isOpen={isLeaving}
+          onClose={() => setIsLeaving(false)}
+          communityName={community.name}
+          communityId={community.id}
         />
       )}
     </div>

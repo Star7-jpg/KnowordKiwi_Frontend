@@ -88,6 +88,18 @@ export const joinCommunity = async (communityId: number) => {
   }
 };
 
+export const leaveCommunity = async (communityId: number) => {
+  try {
+    const response = await privateApiClient.delete(
+      `/communities/leave/${communityId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error leaving community:", error);
+    throw error;
+  }
+};
+
 export const getUserCommunities = async () => {
   try {
     const response = await privateApiClient.get(

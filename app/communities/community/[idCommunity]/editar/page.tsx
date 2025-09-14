@@ -11,8 +11,8 @@ import { Field, Fieldset, Input, Label, Legend } from "@headlessui/react";
 import { ImageIcon } from "lucide-react";
 import ErrorMessageScreen from "@/components/shared/ErrorMessageScreen";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
-import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
-import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
+import CommunitySuccessModal from "@/app/communities/components/modals/CommunitySuccessModal";
+import CommunityErrorModal from "@/app/communities/components/modals/CommunityErrorModal";
 import {
   getCommunityById,
   getTagRecommendations,

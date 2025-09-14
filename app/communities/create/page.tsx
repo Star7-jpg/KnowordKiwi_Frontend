@@ -17,8 +17,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 import debounce from "lodash/debounce";
-import CommunitySuccessModal from "@/components/modals/CommunitySuccessModal";
-import CommunityErrorModal from "@/components/modals/CommunityErrorModal";
+import CommunitySuccessModal from "@/app/communities/components/modals/CommunitySuccessModal";
+import CommunityErrorModal from "@/app/communities/components/modals/CommunityErrorModal";
 import {
   createCommunity,
   getTagRecommendations,
