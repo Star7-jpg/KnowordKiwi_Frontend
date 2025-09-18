@@ -1,13 +1,15 @@
 "use client";
 import { useState } from "react";
 import Tiptap from "../components/TipTap";
+import BlogPreview from "../components/BlogPreview";
 import { useRouter } from "next/navigation";
-import { Button, Input } from "@headlessui/react";
+import { Input } from "@headlessui/react";
 import CreateBlogHeader from "../components/CreateBlogHeader";
 
 export default function CreateBlogPost() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const router = useRouter();
 
   const handleContentChange = (newContent: string) => {
@@ -29,12 +31,18 @@ export default function CreateBlogPost() {
     alert("Contenido publicado (simulación)");
   };
 
+  const handleTogglePreview = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <CreateBlogHeader
         onSubmit={handleSubmit}
         onSave={handleSave}
         onCancel={handleCancel}
+        onTogglePreview={handleTogglePreview}
+        isPreviewMode={isPreviewMode}
       />
       <div className="flex flex-col gap-2">
         <label
@@ -53,7 +61,11 @@ export default function CreateBlogPost() {
         />
       </div>
 
-      <Tiptap content={content} onChange={handleContentChange} />
+      {isPreviewMode ? (
+        <BlogPreview title={title} content={content} />
+      ) : (
+        <Tiptap content={content} onChange={handleContentChange} />
+      )}
     </div>
   );
 }

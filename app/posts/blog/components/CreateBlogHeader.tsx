@@ -1,15 +1,20 @@
 import { Button } from "@headlessui/react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface CreateBlogHeaderProps {
   onSave: () => void;
   onSubmit: () => void;
   onCancel: () => void;
+  onTogglePreview: () => void;
+  isPreviewMode: boolean;
 }
 
 export default function CreateBlogHeader({
   onSave,
   onCancel,
   onSubmit,
+  onTogglePreview,
+  isPreviewMode,
 }: CreateBlogHeaderProps) {
   return (
     <header className="flex items-center justify-between">
@@ -20,6 +25,22 @@ export default function CreateBlogHeader({
           className="text-gray-400 hover:text-white transition-colors"
         >
           Cancelar
+        </Button>
+        <Button
+          onClick={onTogglePreview}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-600 text-white rounded-md hover:border-gray-500 transition-colors font-semibold"
+        >
+          {isPreviewMode ? (
+            <>
+              <EyeOff className="size-4" />
+              Editar
+            </>
+          ) : (
+            <>
+              <Eye className="size-4" />
+              Vista previa
+            </>
+          )}
         </Button>
         <Button
           onClick={onSave}
