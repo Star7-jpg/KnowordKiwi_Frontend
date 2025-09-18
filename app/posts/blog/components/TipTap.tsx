@@ -5,6 +5,7 @@ import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import MenuBar from "./MenuBar";
 import { Youtube } from "../extensions/Youtube";
 
@@ -37,6 +38,12 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
           class: "mx-auto rounded-lg",
         },
         inline: false,
+      }),
+      Link.configure({
+        HTMLAttributes: {
+          class: "text-primary hover:text-primary-hover underline",
+        },
+        openOnClick: false,
       }),
       Youtube.configure({
         HTMLAttributes: {

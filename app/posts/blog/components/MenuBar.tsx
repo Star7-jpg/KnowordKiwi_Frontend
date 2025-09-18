@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "./ImageUpload";
 import YoutubeUpload from "./YoutubeUpload";
+import LinkModal from "./LinkModal";
 
 interface MenuBarProps {
   editor: Editor | null;
@@ -99,6 +100,7 @@ export default function MenuBar({ editor }: MenuBarProps) {
           {option.icon}
         </Button>
       ))}
+      <LinkModal editor={editor} />
       <ImageUpload editor={editor} />
       <YoutubeUpload editor={editor} />
     </div>
