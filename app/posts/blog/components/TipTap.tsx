@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import MenuBar from "./MenuBar";
 
 interface TipTapProps {
@@ -29,6 +30,12 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Highlight.configure({
         multicolor: true,
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: "mx-auto rounded-lg my-4",
+        },
+        inline: false,
       }),
     ],
     content: content,

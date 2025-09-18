@@ -13,6 +13,7 @@ import {
   ListOrdered,
   Strikethrough,
 } from "lucide-react";
+import ImageUpload from "./ImageUpload";
 
 interface MenuBarProps {
   editor: Editor | null;
@@ -97,6 +98,7 @@ export default function MenuBar({ editor }: MenuBarProps) {
           {option.icon}
         </Button>
       ))}
+      <ImageUpload editor={editor} />
     </div>
   );
 }
