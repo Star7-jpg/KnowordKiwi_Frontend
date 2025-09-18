@@ -14,6 +14,7 @@ import {
   Strikethrough,
 } from "lucide-react";
 import ImageUpload from "./ImageUpload";
+import YoutubeUpload from "./YoutubeUpload";
 
 interface MenuBarProps {
   editor: Editor | null;
@@ -99,6 +100,7 @@ export default function MenuBar({ editor }: MenuBarProps) {
         </Button>
       ))}
       <ImageUpload editor={editor} />
+      <YoutubeUpload editor={editor} />
     </div>
   );
 }

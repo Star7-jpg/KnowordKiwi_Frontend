@@ -6,6 +6,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import MenuBar from "./MenuBar";
+import { Youtube } from "../extensions/Youtube";
 
 interface TipTapProps {
   content: string;
@@ -33,7 +34,13 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       }),
       Image.configure({
         HTMLAttributes: {
-          class: "mx-auto rounded-lg my-4",
+          class: "mx-auto rounded-lg",
+        },
+        inline: false,
+      }),
+      Youtube.configure({
+        HTMLAttributes: {
+          class: "mb-4",
         },
         inline: false,
       }),
