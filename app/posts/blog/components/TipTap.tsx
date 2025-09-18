@@ -35,7 +35,7 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
     editorProps: {
       attributes: {
         class:
-          "bg-bg-gray prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] border border-gray-700 rounded-sm py-2 px-4",
+          "bg-bg-gray prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] border border-gray-700 rounded-md py-2 px-4",
       },
     },
     onUpdate: ({ editor }) => {

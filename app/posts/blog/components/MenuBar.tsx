@@ -82,7 +82,7 @@ export default function MenuBar({ editor }: MenuBarProps) {
   ];
 
   return (
-    <div className="border rounded-md p-1 mb-4 bg-gray-900 space-x-2 z-50">
+    <div className="border border-primary rounded-md p-1 mb-4 bg-gray-900 space-x-2 z-50">
       {options.map((option, index) => (
         <Button
           key={index}

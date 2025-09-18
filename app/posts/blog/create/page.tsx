@@ -2,7 +2,8 @@
 import { useState } from "react";
 import Tiptap from "../components/TipTap";
 import { useRouter } from "next/navigation";
-import { Button } from "@headlessui/react";
+import { Button, Input } from "@headlessui/react";
+import CreateBlogHeader from "../components/CreateBlogHeader";
 
 export default function CreateBlogPost() {
   const [title, setTitle] = useState("");
@@ -14,7 +15,7 @@ export default function CreateBlogPost() {
   };
 
   const handleSave = async () => {
-    // TODO: Implementar lógica para guardar, por ejemplo, enviar a una API
+    // TODO: Implementar lógica para guardar borrador
     console.log("Guardando título:", title);
     console.log("Guardando contenido:", content);
     alert("Contenido guardado (simulación)");
@@ -24,26 +25,17 @@ export default function CreateBlogPost() {
     router.push("/posts/blog");
   };
 
+  const handleSubmit = async () => {
+    alert("Contenido publicado (simulación)");
+  };
+
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Crear nuevo blog</h1>
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={handleCancel}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors font-semibold"
-          >
-            Guardar
-          </Button>
-        </div>
-      </header>
-
+      <CreateBlogHeader
+        onSubmit={handleSubmit}
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
       <div className="flex flex-col gap-2">
         <label
           htmlFor="blog-title"
@@ -51,7 +43,7 @@ export default function CreateBlogPost() {
         >
           Título del blog
         </label>
-        <input
+        <Input
           id="blog-title"
           type="text"
           value={title}
