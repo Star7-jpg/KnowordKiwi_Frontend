@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
+import { useEffect } from "react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
@@ -65,6 +66,20 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+
+    // Si el contenido del prop es diferente al del editor, actualízalo.
+    // Esto sincroniza el estado del editor con el estado del componente padre.
+    if (editor.getHTML() !== content) {
+      // El `false` como segundo argumento evita que se dispare el evento `onUpdate`
+      // y así prevenimos un bucle infinito.
+      editor.commands.setContent(content, false);
+    }
+  }, [content, editor]);
 
   return (
     <div>
