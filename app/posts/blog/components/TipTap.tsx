@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,6 +9,7 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import MenuBar from "./MenuBar";
 import { Youtube } from "../extensions/Youtube";
+import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 
 interface TipTapProps {
   content: string;
@@ -16,6 +17,7 @@ interface TipTapProps {
 }
 
 const Tiptap = ({ content, onChange }: TipTapProps) => {
+  const [isDragging, setIsDragging] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -59,6 +61,68 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
         class:
           "bg-bg-gray prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] border border-gray-700 rounded-md py-2 px-4",
       },
+      // Handle drag and drop events
+      handleDrop: (view, event, slice, moved) => {
+        if (!(event instanceof DragEvent) || !event.dataTransfer) {
+          return false;
+        }
+
+        const files = Array.from(event.dataTransfer.files);
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length > 0) {
+          event.preventDefault();
+          
+          // Upload each image file
+          imageFiles.forEach(async (file) => {
+            try {
+              const imageUrl = await uploadToCloudinary(file);
+              // Insert the image at the drop position
+              const { schema } = view.state;
+              const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+              if (coordinates) {
+                const node = schema.nodes.image.create({ src: imageUrl });
+                const transaction = view.state.tr.insert(coordinates.pos, node);
+                view.dispatch(transaction);
+              }
+            } catch (error) {
+              console.error("Error uploading image:", error);
+              alert("Error uploading image. Please try again.");
+            }
+          });
+          
+          return true;
+        }
+        
+        return false;
+      },
+      // Handle drag over events for visual feedback
+      handleDOMEvents: {
+        dragover: (view, event) => {
+          if (!(event instanceof DragEvent) || !event.dataTransfer) {
+            return false;
+          }
+          
+          const files = Array.from(event.dataTransfer.files);
+          const hasImage = files.some(file => file.type.startsWith('image/'));
+          
+          if (hasImage) {
+            event.preventDefault();
+            setIsDragging(true);
+            event.dataTransfer.dropEffect = 'copy';
+          }
+          
+          return false;
+        },
+        dragleave: () => {
+          setIsDragging(false);
+          return false;
+        },
+        drop: () => {
+          setIsDragging(false);
+          return false;
+        }
+      }
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
@@ -82,9 +146,14 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
   }, [content, editor]);
 
   return (
-    <div>
+    <div className="relative">
       <MenuBar editor={editor} />
       <EditorContent editor={editor} />
+      {isDragging && (
+        <div className="absolute inset-0 bg-primary/20 border-2 border-dashed border-primary rounded-md flex items-center justify-center pointer-events-none">
+          <p className="text-primary font-medium">Suelta la imagen aquí para subirla</p>
+        </div>
+      )}
     </div>
   );
 };

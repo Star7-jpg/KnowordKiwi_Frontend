@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@headlessui/react";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Upload } from "lucide-react";
 import { Editor } from "@tiptap/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 
 interface ImageUploadProps {
   editor: Editor | null;
@@ -11,8 +12,11 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ editor }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file || !editor) return;
 
@@ -28,18 +32,22 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
       return;
     }
 
-    // En una implementación real, aquí se enviaría la imagen a un servicio de almacenamiento
-    // y se obtendría la URL para insertar en el editor
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
-      editor.chain().focus().setImage({ src: imageUrl }).run();
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsUploading(true);
+      // Subir la imagen a Cloudinary
+      const imageUrl = await uploadToCloudinary(file);
 
-    // Limpiar el input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      // Insertar la imagen en el editor usando la URL devuelta por Cloudinary
+      editor.chain().focus().setImage({ src: imageUrl }).run();
+    } catch (error) {
+      console.error("Error al subir la imagen:", error);
+      alert("Error al subir la imagen. Por favor, inténtalo de nuevo.");
+    } finally {
+      setIsUploading(false);
+      // Limpiar el input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -48,10 +56,22 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
       <Button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="p-2 rounded-md text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
-        title="Insertar imagen"
+        disabled={isUploading}
+        className={`p-2 rounded-md transition-colors ${
+          isUploading
+            ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+            : "text-gray-400 hover:bg-gray-800 hover:text-white"
+        }`}
+        title={isUploading ? "Subiendo imagen..." : "Insertar imagen"}
       >
-        <ImageIcon className="size-4" />
+        {isUploading ? (
+          <>
+            <Upload className="size-4 animate-pulse" />
+            <span className="text-xs">Subiendo...</span>
+          </>
+        ) : (
+          <ImageIcon className="size-4" />
+        )}
       </Button>
       <input
         type="file"
@@ -59,6 +79,7 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
         onChange={handleImageUpload}
         accept="image/*"
         className="hidden"
+        disabled={isUploading}
       />
     </>
   );
