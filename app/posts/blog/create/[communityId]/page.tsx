@@ -8,13 +8,14 @@ import CreateBlogHeader from "../../components/CreateBlogHeader";
 import Tiptap from "../../components/TipTap";
 import { useDebounce } from "../../hooks/useDebounce";
 import { BlogDraft } from "@/types/posts/blog";
-import Modal from "@/components/Modal";
+import Modal from "@/components/shared/BlogModal";
+import { createBlogPost } from "@/services/posts/blogs/blogsService";
 
 type SavingStatus = "idle" | "saving" | "saved";
 
 export default function CreateBlogPost() {
   const params = useParams();
-  const communityId = params.communityId;
+  const communityId = params.communityId as unknown as number;
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -88,20 +89,52 @@ export default function CreateBlogPost() {
   };
 
   const handleSubmit = async () => {
+    try {
+      await handleCreateBlogPost();
+      await handleSetModalSuccess();
+    } catch (error) {
+      console.error("Error al crear el blog:", error);
+      await handleSetModalError();
+    }
+  };
+
+  const handleCreateBlogPost = async () => {
     // Limpiar el borrador guardado
     localStorage.removeItem("blogDraft");
-    console.log("Publicando blog con título:", title);
-    console.log("Contenido:", content);
-    console.log("Comunidad ID:", communityId);
+    const blogData = {
+      title,
+      content,
+      communityId,
+    };
+    try {
+      await createBlogPost(blogData);
+    } catch (error) {
+      console.error("Error al publicar el blog:", error);
+      throw error;
+    }
+  };
+
+  const handleSetModalSuccess = async () => {
     setModal({
       isOpen: true,
       title: "Contenido publicado",
       message: "Tu blog ha sido publicado exitosamente en la comunidad.",
-      onConfirm: () => {
-        setModal((prev) => ({ ...prev, isOpen: false }));
-        // router.push(`/posts/blog/${communityId}`);
-      },
+      onConfirm: handleSetModalClose,
     });
+  };
+
+  const handleSetModalError = async () => {
+    setModal({
+      isOpen: true,
+      title: "¡Ups! Algo salió mal",
+      message: "Tu blog no ha podido ser publicado en la comunidad.",
+      onConfirm: handleSetModalClose,
+    });
+  };
+
+  const handleSetModalClose = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+    // router.push(`/posts/blog/${communityId}`);
   };
 
   const handleTogglePreview = () => {

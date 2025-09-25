@@ -1,5 +1,11 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
+import { Fragment } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,19 +16,19 @@ interface ModalProps {
   onConfirm?: () => void;
   cancelText?: string;
   onCancel?: () => void;
-  type?: 'alert' | 'confirm';
+  type?: "alert" | "confirm";
 }
 
-export default function Modal({
+export default function BlogModal({
   isOpen,
   onClose,
   title,
   children,
-  confirmText = 'Aceptar',
+  confirmText = "Aceptar",
   onConfirm,
-  cancelText = 'Cancelar',
+  cancelText = "Cancelar",
   onCancel,
-  type = 'alert',
+  type = "alert",
 }: ModalProps) {
   const handleConfirm = () => {
     if (onConfirm) {
@@ -41,7 +47,7 @@ export default function Modal({
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -51,11 +57,11 @@ export default function Modal({
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black bg-opacity-50" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -64,24 +70,22 @@ export default function Modal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
+              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
+                <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-white"
                 >
                   {title}
-                </Dialog.Title>
+                </DialogTitle>
                 <div className="mt-4">
-                  <p className="text-sm text-gray-300">
-                    {children}
-                  </p>
+                  <p className="text-sm text-gray-300">{children}</p>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
-                  {type === 'confirm' && (
+                  {type === "confirm" && (
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-gray-600 bg-transparent px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="inline-flex justify-center rounded-md border border-gray-600 bg-transparent px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-terciary"
                       onClick={handleCancel}
                     >
                       {cancelText}
@@ -89,14 +93,14 @@ export default function Modal({
                   )}
                   <button
                     type="button"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-secondary"
                     onClick={handleConfirm}
                   >
                     {confirmText}
                   </button>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>
