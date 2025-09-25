@@ -1,5 +1,6 @@
-// import { format } from "date-fns";
-// import { es } from "date-fns/locale";
+"use client";
+
+import { useState, useEffect } from "react";
 
 interface BlogPreviewProps {
   title: string;
@@ -7,8 +8,20 @@ interface BlogPreviewProps {
 }
 
 export default function BlogPreview({ title, content }: BlogPreviewProps) {
-  // Fecha simulada para la vista previa
-  const previewDate = new Date();
+  const [sanitizedContent, setSanitizedContent] = useState(
+    "<p>Cargando vista previa...</p>",
+  );
+
+  useEffect(() => {
+    // Importar DOMPurify dinámicamente solo en el lado del cliente
+    import("isomorphic-dompurify").then((DOMPurify) => {
+      setSanitizedContent(
+        DOMPurify.sanitize(
+          content || "<p>El contenido del blog aparecerá aqui...</p>",
+        ),
+      );
+    });
+  }, [content]);
 
   return (
     <div className="bg-bg-gray border border-gray-700 rounded-md p-6">
@@ -19,16 +32,13 @@ export default function BlogPreview({ title, content }: BlogPreviewProps) {
         <div className="flex items-center text-gray-400 text-sm">
           <span>Por Autor del Blog</span>
           <span className="mx-2">•</span>
-          <time dateTime={previewDate.toISOString()}>
-            {/* {format(previewDate, "d 'de' MMMM 'de' yyyy", { locale: es })} */}
-          </time>
         </div>
       </header>
 
       <div
         className="prose prose-invert max-w-none"
         dangerouslySetInnerHTML={{
-          __html: content || "<p>Contenido del blog aparecerá aquí...</p>",
+          __html: sanitizedContent,
         }}
       />
     </div>

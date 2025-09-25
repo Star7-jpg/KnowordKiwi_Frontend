@@ -5,7 +5,6 @@ import {
   DialogPanel,
   DialogTitle,
   Transition,
-  TransitionChild,
 } from "@headlessui/react";
 
 interface InfoModalProps {

@@ -38,7 +38,7 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       }),
       Image.configure({
         HTMLAttributes: {
-          class: "mx-auto rounded-lg",
+          class: "mx-auto rounded-lg my-6",
         },
         inline: false,
       }),
@@ -50,7 +50,7 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       }),
       Youtube.configure({
         HTMLAttributes: {
-          class: "mb-4",
+          class: "my-6",
         },
         inline: false,
       }),
@@ -68,18 +68,23 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
         }
 
         const files = Array.from(event.dataTransfer.files);
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
-        
+        const imageFiles = files.filter((file) =>
+          file.type.startsWith("image/"),
+        );
+
         if (imageFiles.length > 0) {
           event.preventDefault();
-          
+
           // Upload each image file
           imageFiles.forEach(async (file) => {
             try {
               const imageUrl = await uploadToCloudinary(file);
               // Insert the image at the drop position
               const { schema } = view.state;
-              const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+              const coordinates = view.posAtCoords({
+                left: event.clientX,
+                top: event.clientY,
+              });
               if (coordinates) {
                 const node = schema.nodes.image.create({ src: imageUrl });
                 const transaction = view.state.tr.insert(coordinates.pos, node);
@@ -90,10 +95,10 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
               alert("Error uploading image. Please try again.");
             }
           });
-          
+
           return true;
         }
-        
+
         return false;
       },
       // Handle drag over events for visual feedback
@@ -102,16 +107,16 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
           if (!(event instanceof DragEvent) || !event.dataTransfer) {
             return false;
           }
-          
+
           const files = Array.from(event.dataTransfer.files);
-          const hasImage = files.some(file => file.type.startsWith('image/'));
-          
+          const hasImage = files.some((file) => file.type.startsWith("image/"));
+
           if (hasImage) {
             event.preventDefault();
             setIsDragging(true);
-            event.dataTransfer.dropEffect = 'copy';
+            event.dataTransfer.dropEffect = "copy";
           }
-          
+
           return false;
         },
         dragleave: () => {
@@ -121,8 +126,8 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
         drop: () => {
           setIsDragging(false);
           return false;
-        }
-      }
+        },
+      },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
@@ -151,7 +156,9 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       <EditorContent editor={editor} />
       {isDragging && (
         <div className="absolute inset-0 bg-primary/20 border-2 border-dashed border-primary rounded-md flex items-center justify-center pointer-events-none">
-          <p className="text-primary font-medium">Suelta la imagen aquí para subirla</p>
+          <p className="text-primary font-medium">
+            Suelta la imagen aquí para subirla
+          </p>
         </div>
       )}
     </div>

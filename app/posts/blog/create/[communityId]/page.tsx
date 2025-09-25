@@ -1,26 +1,30 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import Tiptap from "../components/TipTap";
-import BlogPreview from "../components/BlogPreview";
-import { useRouter } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
+import { useParams, useRouter } from "next/navigation";
 import { Input } from "@headlessui/react";
-import CreateBlogHeader from "../components/CreateBlogHeader";
-import { useDebounce } from "../hooks/useDebounce";
-
-// Define el tipo para el borrador
-interface BlogDraft {
-  title: string;
-  content: string;
-  lastSaved: Date;
-}
+import BlogPreview from "../../components/BlogPreview";
+import CreateBlogHeader from "../../components/CreateBlogHeader";
+import Tiptap from "../../components/TipTap";
+import { useDebounce } from "../../hooks/useDebounce";
+import { BlogDraft } from "@/types/posts/blog";
+import Modal from "@/components/Modal";
 
 type SavingStatus = "idle" | "saving" | "saved";
 
 export default function CreateBlogPost() {
+  const params = useParams();
+  const communityId = params.communityId;
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [savingStatus, setSavingStatus] = useState<SavingStatus>("idle");
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
   const router = useRouter();
 
   // Cargar borrador si existe
@@ -64,12 +68,19 @@ export default function CreateBlogPost() {
   }, [title, content, debouncedSaveDraft]);
 
   const handleContentChange = (newContent: string) => {
-    setContent(newContent);
+    const sanitizedContent = DOMPurify.sanitize(newContent);
+    setContent(sanitizedContent);
   };
 
   const handleSave = async () => {
     saveDraft();
-    alert("Borrador guardado");
+    setModal({
+      isOpen: true,
+      title: "Borrador guardado",
+      message:
+        "Tu borrador ha sido guardado exitosamente en el almacenamiento local.",
+      onConfirm: () => setModal((prev) => ({ ...prev, isOpen: false })),
+    });
   };
 
   const handleCancel = () => {
@@ -79,7 +90,18 @@ export default function CreateBlogPost() {
   const handleSubmit = async () => {
     // Limpiar el borrador guardado
     localStorage.removeItem("blogDraft");
-    alert("Contenido publicado");
+    console.log("Publicando blog con título:", title);
+    console.log("Contenido:", content);
+    console.log("Comunidad ID:", communityId);
+    setModal({
+      isOpen: true,
+      title: "Contenido publicado",
+      message: "Tu blog ha sido publicado exitosamente en la comunidad.",
+      onConfirm: () => {
+        setModal((prev) => ({ ...prev, isOpen: false }));
+        // router.push(`/posts/blog/${communityId}`);
+      },
+    });
   };
 
   const handleTogglePreview = () => {
@@ -129,6 +151,15 @@ export default function CreateBlogPost() {
       ) : (
         <Tiptap content={content} onChange={handleContentChange} />
       )}
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal((prev) => ({ ...prev, isOpen: false }))}
+        title={modal.title}
+        onConfirm={modal.onConfirm}
+      >
+        {modal.message}
+      </Modal>
     </div>
   );
 }
