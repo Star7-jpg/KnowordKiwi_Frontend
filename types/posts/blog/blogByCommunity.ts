@@ -15,4 +15,7 @@ export interface BlogsByCommunity {
       avatar?: string;
     };
   };
+  blogContent: {
+    subtitle: string;
+  };
 }

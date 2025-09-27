@@ -101,9 +101,7 @@ export default function BlogPostsComponent({
 
           {/* Subtitle/Description - Matching the image's second line */}
           <p className="text-lg text-gray-400 mb-4">
-            The next generation of software developers will be architects, not
-            coders.
-            {/* Note: This text is hardcoded from the image. If your API provides a subtitle/excerpt, use that here. */}
+            {post.blogContent.subtitle}
           </p>
 
           {/* Metadata/Stats Section - Mimicking the "4d ago 438 17" row */}
