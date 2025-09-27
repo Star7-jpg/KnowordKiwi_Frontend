@@ -14,7 +14,7 @@ import {
 } from "@/services/community/communityServices";
 import { CommunityWithOwnership } from "@/types/community";
 import LeaveCommunityModal from "../../components/modals/LeaveCommunityModal";
-import PostComponent from "../../components/ui/posts/PostsBarComponent";
+import PostsComponent from "../../components/ui/posts/PostsComponent";
 
 export default function CommunityDetail() {
   const params = useParams();
@@ -282,22 +282,8 @@ export default function CommunityDetail() {
 
       <div className="bg-bg-gray rounded-xl shadow-lg pb-8">
         {/* Secciones futuras */}
-        <div className="mt-12 px-8">
-          <div className="border-b border-gray-700 py-2">
-            <nav className="flex space-x-8 justify-around">
-              <button className="py-4 px-1  border-terciary text-terciary font-medium text-sm">
-                Publicaciones
-              </button>
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
-                Encuestas
-              </button>
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
-                Miembros
-              </button>
-            </nav>
-          </div>
-
-          <PostComponent />
+        <div className="mt-12 px-8 py-2">
+          <PostsComponent communityId={communityId} />
         </div>
       </div>
 

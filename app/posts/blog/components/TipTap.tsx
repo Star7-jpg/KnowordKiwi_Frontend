@@ -63,7 +63,7 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
           "bg-bg-gray prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] border border-gray-700 rounded-md py-2 px-4",
       },
       // Handle drag and drop events
-      handleDrop: (view, event, slice, moved) => {
+      handleDrop: (view, event) => {
         if (!(event instanceof DragEvent) || !event.dataTransfer) {
           return false;
         }

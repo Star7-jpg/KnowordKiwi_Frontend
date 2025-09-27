@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify, { Config } from "isomorphic-dompurify";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@headlessui/react";
 import { useForm, Controller } from "react-hook-form";
@@ -8,20 +8,65 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import BlogPreview from "../../components/BlogPreview";
 import CreateBlogHeader from "../../components/CreateBlogHeader";
 import Tiptap from "../../components/TipTap";
-import { useDebounce } from "../../hooks/useDebounce";
-import { BlogDraft } from "@/types/posts/blog";
+import { BlogDraft, BlogPost } from "@/types/posts/blog";
 import Modal from "@/components/shared/BlogModal";
 import { createBlogPost } from "@/services/posts/blogs/blogsService";
 import {
   blogPostSchema,
   type BlogPostFormData,
 } from "@/app/posts/blog/schemas";
+import { useDebounce } from "../../hooks/useDebounce";
 
 type SavingStatus = "idle" | "saving" | "saved";
 
+const DOM_PURIFY_CONFIG: Config = {
+  ALLOWED_TAGS: [
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "ol",
+    "ul",
+    "li",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "code",
+    "hr",
+    "div",
+    "iframe",
+    "a",
+    "img",
+  ],
+  ALLOWED_ATTR: [
+    "href",
+    "src",
+    "alt",
+    "width",
+    "height",
+    "class",
+    "rel",
+    "target",
+    "data-youtube-video",
+  ],
+  ADD_ATTR: ["allowfullscreen"],
+  ALLOWED_IFRAME_HOSTNAMES: ["www.youtube.com", "youtube.com", "youtu.be"],
+};
+
+const sanitizeContent = (content: string) => {
+  return DOMPurify.sanitize(content, DOM_PURIFY_CONFIG);
+};
+
 export default function CreateBlogPost() {
   const params = useParams();
-  const communityId = params.communityId;
+  const communityId = Number(params.communityId);
+  const router = useRouter();
 
   const {
     control,
@@ -29,6 +74,7 @@ export default function CreateBlogPost() {
     formState: { errors },
     setValue,
     getValues,
+    watch,
   } = useForm<BlogPostFormData>({
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
@@ -45,7 +91,6 @@ export default function CreateBlogPost() {
     message: "",
     onConfirm: () => {},
   });
-  const router = useRouter();
 
   // Cargar borrador si existe
   useEffect(() => {
@@ -54,53 +99,12 @@ export default function CreateBlogPost() {
       try {
         const draft: BlogDraft = JSON.parse(savedDraft);
         setValue("title", draft.title);
-        // Sanitize content when loading from localStorage
-        const sanitizedContent = DOMPurify.sanitize(draft.content, {
-          ALLOWED_TAGS: [
-            "p",
-            "br",
-            "strong",
-            "em",
-            "u",
-            "ol",
-            "ul",
-            "li",
-            "h1",
-            "h2",
-            "h3",
-            "h4",
-            "h5",
-            "h6",
-            "blockquote",
-            "pre",
-            "code",
-            "hr",
-            "div",
-            "iframe",
-            "a",
-            "img",
-          ],
-          ALLOWED_ATTR: [
-            "href",
-            "src",
-            "alt",
-            "width",
-            "height",
-            "class",
-            "rel",
-            "target",
-            "data-youtube-video",
-          ],
-          ADD_ATTR: ["allowfullscreen"],
-          ALLOWED_IFRAME_HOSTNAMES: [
-            "www.youtube.com",
-            "youtube.com",
-            "youtu.be",
-          ],
-        });
+        const sanitizedContent = sanitizeContent(draft.content);
         setValue("content", sanitizedContent);
       } catch (e) {
         console.error("Error al cargar el borrador:", e);
+        // Si hay un error, limpiar el borrador corrupto
+        localStorage.removeItem("blogDraft");
       }
     }
   }, [setValue]);
@@ -109,46 +113,7 @@ export default function CreateBlogPost() {
   const saveDraft = useCallback(() => {
     setSavingStatus("saving");
     const formData = getValues();
-    // Sanitize content before saving to localStorage
-    const sanitizedContent = DOMPurify.sanitize(formData.content, {
-      ALLOWED_TAGS: [
-        "p",
-        "br",
-        "strong",
-        "em",
-        "u",
-        "ol",
-        "ul",
-        "li",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "blockquote",
-        "pre",
-        "code",
-        "hr",
-        "div",
-        "iframe",
-        "a",
-        "img",
-      ],
-      ALLOWED_ATTR: [
-        "href",
-        "src",
-        "alt",
-        "width",
-        "height",
-        "class",
-        "rel",
-        "target",
-        "data-youtube-video",
-      ],
-      ADD_ATTR: ["allowfullscreen"],
-      ALLOWED_IFRAME_HOSTNAMES: ["www.youtube.com", "youtube.com", "youtu.be"],
-    });
+    const sanitizedContent = sanitizeContent(formData.content);
     const draft: BlogDraft = {
       title: formData.title,
       content: sanitizedContent,
@@ -165,12 +130,15 @@ export default function CreateBlogPost() {
   }, [getValues]);
 
   // Crear versión debounce de la función de guardado
-  const debouncedSaveDraft = useDebounce(saveDraft, 2000);
+  const debouncedSaveDraft = useDebounce(saveDraft, 1500);
+
+  const watchedTitle = watch("title");
+  const watchedContent = watch("content");
 
   // Efecto para guardar automáticamente cuando cambian título o contenido
   useEffect(() => {
     debouncedSaveDraft();
-  }, [debouncedSaveDraft]);
+  }, [watchedTitle, watchedContent, debouncedSaveDraft]);
 
   const handleSave = async () => {
     saveDraft();
@@ -179,102 +147,45 @@ export default function CreateBlogPost() {
       title: "Borrador guardado",
       message:
         "Tu borrador ha sido guardado exitosamente en el almacenamiento local.",
-      onConfirm: () => setModal((prev) => ({ ...prev, isOpen: false })),
+      onConfirm: () => setModal({ ...modal, isOpen: false }),
     });
   };
 
   const handleCancel = () => {
-    router.push("/posts/blog");
+    // TODO: Preguntar si quiere guardar antes de salir
+    router.back();
   };
 
-  const handleSubmit = async () => {
+  const onSubmit = async (data: BlogPostFormData) => {
     try {
-      await handleCreateBlogPost();
-      await handleSetModalSuccess();
+      const sanitizedContent = sanitizeContent(data.content);
+      const blogData: BlogPost = {
+        title: data.title,
+        content: sanitizedContent,
+        communityId: communityId,
+      };
+
+      await createBlogPost(blogData);
+      localStorage.removeItem("blogDraft");
+
+      setModal({
+        isOpen: true,
+        title: "Contenido publicado",
+        message: "Tu blog ha sido publicado exitosamente en la comunidad.",
+        onConfirm: () => {
+          setModal({ ...modal, isOpen: false });
+          router.push(`/communities/community/${communityId}`); // Redirigir a la comunidad
+        },
+      });
     } catch (error) {
       console.error("Error al crear el blog:", error);
-      await handleSetModalError();
+      setModal({
+        isOpen: true,
+        title: "¡Ups! Algo salió mal",
+        message: "Tu blog no ha podido ser publicado en la comunidad.",
+        onConfirm: () => setModal({ ...modal, isOpen: false }),
+      });
     }
-  };
-
-  const handleCreateBlogPost = async () => {
-    // Limpiar el borrador guardado
-    localStorage.removeItem("blogDraft");
-    const formData = getValues();
-    // Sanitiza el contenido antes de enviarlo al servidor
-    const sanitizedContent = DOMPurify.sanitize(formData.content, {
-      ALLOWED_TAGS: [
-        "p",
-        "br",
-        "strong",
-        "em",
-        "u",
-        "ol",
-        "ul",
-        "li",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "blockquote",
-        "pre",
-        "code",
-        "hr",
-        "div",
-        "iframe",
-        "a",
-        "img",
-      ],
-      ALLOWED_ATTR: [
-        "href",
-        "src",
-        "alt",
-        "width",
-        "height",
-        "class",
-        "rel",
-        "target",
-        "data-youtube-video",
-      ],
-      ADD_ATTR: ["allowfullscreen"],
-      ALLOWED_IFRAME_HOSTNAMES: ["www.youtube.com", "youtube.com", "youtu.be"],
-    });
-    const blogData = {
-      title: formData.title,
-      content: sanitizedContent,
-      communityId: Number(communityId),
-    };
-    try {
-      await createBlogPost(blogData);
-    } catch (error) {
-      console.error("Error al publicar el blog:", error);
-      throw error;
-    }
-  };
-
-  const handleSetModalSuccess = async () => {
-    setModal({
-      isOpen: true,
-      title: "Contenido publicado",
-      message: "Tu blog ha sido publicado exitosamente en la comunidad.",
-      onConfirm: handleSetModalClose,
-    });
-  };
-
-  const handleSetModalError = async () => {
-    setModal({
-      isOpen: true,
-      title: "¡Ups! Algo salió mal",
-      message: "Tu blog no ha podido ser publicado en la comunidad.",
-      onConfirm: handleSetModalClose,
-    });
-  };
-
-  const handleSetModalClose = () => {
-    setModal((prev) => ({ ...prev, isOpen: false }));
-    // router.push(`/posts/blog/${communityId}`);
   };
 
   const handleTogglePreview = () => {
@@ -289,7 +200,7 @@ export default function CreateBlogPost() {
   return (
     <div className="flex flex-col gap-8">
       <CreateBlogHeader
-        onSubmit={handleSubmitForm(handleSubmit)}
+        onSubmit={handleSubmitForm(onSubmit)}
         onSave={handleSave}
         onCancel={handleCancel}
         onTogglePreview={handleTogglePreview}
@@ -366,7 +277,7 @@ export default function CreateBlogPost() {
 
       <Modal
         isOpen={modal.isOpen}
-        onClose={() => setModal((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => setModal({ ...modal, isOpen: false })}
         title={modal.title}
         onConfirm={modal.onConfirm}
       >
