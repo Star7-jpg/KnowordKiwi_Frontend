@@ -79,6 +79,7 @@ export default function CreateBlogPost() {
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
       title: "",
+      subtitle: "",
       content: "",
     },
   });
@@ -99,6 +100,7 @@ export default function CreateBlogPost() {
       try {
         const draft: BlogDraft = JSON.parse(savedDraft);
         setValue("title", draft.title);
+        setValue("subtitle", draft.subtitle);
         const sanitizedContent = sanitizeContent(draft.content);
         setValue("content", sanitizedContent);
       } catch (e) {
@@ -116,6 +118,7 @@ export default function CreateBlogPost() {
     const sanitizedContent = sanitizeContent(formData.content);
     const draft: BlogDraft = {
       title: formData.title,
+      subtitle: formData.subtitle,
       content: sanitizedContent,
       lastSaved: new Date(),
     };
@@ -134,11 +137,12 @@ export default function CreateBlogPost() {
 
   const watchedTitle = watch("title");
   const watchedContent = watch("content");
+  const watchedSubtitle = watch("subtitle");
 
   // Efecto para guardar automáticamente cuando cambian título o contenido
   useEffect(() => {
     debouncedSaveDraft();
-  }, [watchedTitle, watchedContent, debouncedSaveDraft]);
+  }, [watchedTitle, watchedContent, watchedSubtitle, debouncedSaveDraft]);
 
   const handleSave = async () => {
     saveDraft();
@@ -161,6 +165,7 @@ export default function CreateBlogPost() {
       const sanitizedContent = sanitizeContent(data.content);
       const blogData: BlogPost = {
         title: data.title,
+        subtitle: data.subtitle,
         content: sanitizedContent,
         communityId: communityId,
       };
@@ -220,7 +225,7 @@ export default function CreateBlogPost() {
             </span>
           )}
           {errors.title && (
-            <span className="text-xs text-red-500 ml-2">
+            <span className="text-xs text-error ml-2">
               {errors.title.message}
             </span>
           )}
@@ -243,6 +248,41 @@ export default function CreateBlogPost() {
         />
         {errors.title && (
           <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between items-center h-5">
+          <label
+            htmlFor="blog-subtitle"
+            className="text-sm font-medium text-gray-300"
+          >
+            Subtítulo del blog
+          </label>
+          {errors.subtitle && (
+            <span className="text-xs text-error ml-2">
+              {errors.subtitle.message}
+            </span>
+          )}
+        </div>
+        <Controller
+          name="subtitle"
+          control={control}
+          render={({ field }) => (
+            <Input
+              id="blog-subtitle"
+              type="text"
+              value={field.value}
+              onChange={field.onChange}
+              className={`px-4 py-3 bg-bg-gray border ${
+                errors.subtitle ? "border-red-500" : "border-gray-700"
+              } rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
+              placeholder="Escribe el subtítulo atractivo para tu blog..."
+            />
+          )}
+        />
+        {errors.subtitle && (
+          <p className="text-sm text-red-500 mt-1">{errors.subtitle.message}</p>
         )}
       </div>
 
