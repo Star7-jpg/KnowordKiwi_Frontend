@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@headlessui/react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import BlogPreview from "../../components/BlogPreview";
 import CreateBlogHeader from "../../components/CreateBlogHeader";
 import Tiptap from "../../components/TipTap";
@@ -10,14 +12,31 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { BlogDraft } from "@/types/posts/blog";
 import Modal from "@/components/shared/BlogModal";
 import { createBlogPost } from "@/services/posts/blogs/blogsService";
+import {
+  blogPostSchema,
+  type BlogPostFormData,
+} from "@/app/posts/blog/schemas";
 
 type SavingStatus = "idle" | "saving" | "saved";
 
 export default function CreateBlogPost() {
   const params = useParams();
-  const communityId = params.communityId as unknown as number;
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const communityId = params.communityId;
+
+  const {
+    control,
+    handleSubmit: handleSubmitForm,
+    formState: { errors },
+    setValue,
+    getValues,
+  } = useForm<BlogPostFormData>({
+    resolver: zodResolver(blogPostSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+    },
+  });
+
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [savingStatus, setSavingStatus] = useState<SavingStatus>("idle");
   const [modal, setModal] = useState({
@@ -34,20 +53,105 @@ export default function CreateBlogPost() {
     if (savedDraft) {
       try {
         const draft: BlogDraft = JSON.parse(savedDraft);
-        setTitle(draft.title);
-        setContent(draft.content);
+        setValue("title", draft.title);
+        // Sanitize content when loading from localStorage
+        const sanitizedContent = DOMPurify.sanitize(draft.content, {
+          ALLOWED_TAGS: [
+            "p",
+            "br",
+            "strong",
+            "em",
+            "u",
+            "ol",
+            "ul",
+            "li",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "blockquote",
+            "pre",
+            "code",
+            "hr",
+            "div",
+            "iframe",
+            "a",
+            "img",
+          ],
+          ALLOWED_ATTR: [
+            "href",
+            "src",
+            "alt",
+            "width",
+            "height",
+            "class",
+            "rel",
+            "target",
+            "data-youtube-video",
+          ],
+          ADD_ATTR: ["allowfullscreen"],
+          ALLOWED_IFRAME_HOSTNAMES: [
+            "www.youtube.com",
+            "youtube.com",
+            "youtu.be",
+          ],
+        });
+        setValue("content", sanitizedContent);
       } catch (e) {
         console.error("Error al cargar el borrador:", e);
       }
     }
-  }, []);
+  }, [setValue]);
 
   // Función para guardar el borrador
   const saveDraft = useCallback(() => {
     setSavingStatus("saving");
+    const formData = getValues();
+    // Sanitize content before saving to localStorage
+    const sanitizedContent = DOMPurify.sanitize(formData.content, {
+      ALLOWED_TAGS: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "u",
+        "ol",
+        "ul",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "pre",
+        "code",
+        "hr",
+        "div",
+        "iframe",
+        "a",
+        "img",
+      ],
+      ALLOWED_ATTR: [
+        "href",
+        "src",
+        "alt",
+        "width",
+        "height",
+        "class",
+        "rel",
+        "target",
+        "data-youtube-video",
+      ],
+      ADD_ATTR: ["allowfullscreen"],
+      ALLOWED_IFRAME_HOSTNAMES: ["www.youtube.com", "youtube.com", "youtu.be"],
+    });
     const draft: BlogDraft = {
-      title,
-      content,
+      title: formData.title,
+      content: sanitizedContent,
       lastSaved: new Date(),
     };
     localStorage.setItem("blogDraft", JSON.stringify(draft));
@@ -58,7 +162,7 @@ export default function CreateBlogPost() {
         setSavingStatus("idle");
       }, 2000);
     }, 1000);
-  }, [title, content]);
+  }, [getValues]);
 
   // Crear versión debounce de la función de guardado
   const debouncedSaveDraft = useDebounce(saveDraft, 2000);
@@ -66,12 +170,7 @@ export default function CreateBlogPost() {
   // Efecto para guardar automáticamente cuando cambian título o contenido
   useEffect(() => {
     debouncedSaveDraft();
-  }, [title, content, debouncedSaveDraft]);
-
-  const handleContentChange = (newContent: string) => {
-    const sanitizedContent = DOMPurify.sanitize(newContent);
-    setContent(sanitizedContent);
-  };
+  }, [debouncedSaveDraft]);
 
   const handleSave = async () => {
     saveDraft();
@@ -101,10 +200,51 @@ export default function CreateBlogPost() {
   const handleCreateBlogPost = async () => {
     // Limpiar el borrador guardado
     localStorage.removeItem("blogDraft");
+    const formData = getValues();
+    // Sanitiza el contenido antes de enviarlo al servidor
+    const sanitizedContent = DOMPurify.sanitize(formData.content, {
+      ALLOWED_TAGS: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "u",
+        "ol",
+        "ul",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "pre",
+        "code",
+        "hr",
+        "div",
+        "iframe",
+        "a",
+        "img",
+      ],
+      ALLOWED_ATTR: [
+        "href",
+        "src",
+        "alt",
+        "width",
+        "height",
+        "class",
+        "rel",
+        "target",
+        "data-youtube-video",
+      ],
+      ADD_ATTR: ["allowfullscreen"],
+      ALLOWED_IFRAME_HOSTNAMES: ["www.youtube.com", "youtube.com", "youtu.be"],
+    });
     const blogData = {
-      title,
-      content,
-      communityId,
+      title: formData.title,
+      content: sanitizedContent,
+      communityId: Number(communityId),
     };
     try {
       await createBlogPost(blogData);
@@ -149,7 +289,7 @@ export default function CreateBlogPost() {
   return (
     <div className="flex flex-col gap-8">
       <CreateBlogHeader
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitForm(handleSubmit)}
         onSave={handleSave}
         onCancel={handleCancel}
         onTogglePreview={handleTogglePreview}
@@ -168,21 +308,60 @@ export default function CreateBlogPost() {
               {savingStatusText[savingStatus]}
             </span>
           )}
+          {errors.title && (
+            <span className="text-xs text-red-500 ml-2">
+              {errors.title.message}
+            </span>
+          )}
         </div>
-        <Input
-          id="blog-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="px-4 py-3 bg-bg-gray border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          placeholder="Escribe el título de tu blog..."
+        <Controller
+          name="title"
+          control={control}
+          render={({ field }) => (
+            <Input
+              id="blog-title"
+              type="text"
+              value={field.value}
+              onChange={field.onChange}
+              className={`px-4 py-3 bg-bg-gray border ${
+                errors.title ? "border-red-500" : "border-gray-700"
+              } rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
+              placeholder="Escribe el título de tu blog..."
+            />
+          )}
         />
+        {errors.title && (
+          <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
+        )}
       </div>
 
       {isPreviewMode ? (
-        <BlogPreview title={title} content={content} />
+        <BlogPreview
+          title={getValues("title")}
+          content={getValues("content")}
+        />
       ) : (
-        <Tiptap content={content} onChange={handleContentChange} />
+        <div className="relative">
+          <Controller
+            name="content"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <Tiptap
+                content={value}
+                onChange={(newContent) => {
+                  onChange(newContent);
+                  // Actualizar el contenido en el formulario
+                  setValue("content", newContent, { shouldValidate: true });
+                }}
+              />
+            )}
+          />
+          {errors.content && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.content.message}
+            </p>
+          )}
+        </div>
       )}
 
       <Modal

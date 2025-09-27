@@ -2,6 +2,7 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import { useEffect, useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
@@ -130,7 +131,51 @@ const Tiptap = ({ content, onChange }: TipTapProps) => {
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // Configure DOMPurify to allow YouTube iframes
+      const sanitizedContent = DOMPurify.sanitize(editor.getHTML(), {
+        ALLOWED_TAGS: [
+          "p",
+          "br",
+          "strong",
+          "em",
+          "u",
+          "ol",
+          "ul",
+          "li",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+          "h5",
+          "h6",
+          "blockquote",
+          "pre",
+          "code",
+          "hr",
+          "div",
+          "iframe",
+          "a",
+          "img",
+        ],
+        ALLOWED_ATTR: [
+          "href",
+          "src",
+          "alt",
+          "width",
+          "height",
+          "class",
+          "rel",
+          "target",
+          "data-youtube-video",
+        ],
+        ADD_ATTR: ["allowfullscreen"],
+        ALLOWED_IFRAME_HOSTNAMES: [
+          "www.youtube.com",
+          "youtube.com",
+          "youtu.be",
+        ],
+      });
+      onChange(sanitizedContent);
     },
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,
