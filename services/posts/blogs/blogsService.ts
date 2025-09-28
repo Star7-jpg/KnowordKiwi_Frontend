@@ -1,5 +1,5 @@
 import privateApiClient from "@/services/client/privateApiClient";
-import { BlogPost, BlogsByCommunity } from "@/types/posts/blog";
+import { BlogPost, BlogsByCommunity, BlogById } from "@/types/posts/blog";
 
 export const createBlogPost = async (data: BlogPost) => {
   try {
@@ -19,6 +19,16 @@ export const getBlogPostsByCommunity = async (communityId: number) => {
     return response.data as BlogsByCommunity[];
   } catch (error) {
     console.error("Error getting blog posts by community:", error);
+    throw error;
+  }
+};
+
+export const getBlogPostById = async (id: number) => {
+  try {
+    const response = await privateApiClient.get(`/posts/blogs/${id}`);
+    return response.data as BlogById;
+  } catch (error) {
+    console.error("Error getting blog post by ID:", error);
     throw error;
   }
 };

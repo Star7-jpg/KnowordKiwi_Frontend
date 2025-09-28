@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { MessageCircle, Heart, User } from "lucide-react";
 import { getBlogPostsByCommunity } from "@/services/posts/blogs/blogsService";
 import { BlogsByCommunity } from "@/types/posts/blog";
+import Link from "next/link";
 
 interface BlogPostsComponentProps {
   communityId: number;
@@ -82,49 +83,55 @@ export default function BlogPostsComponent({
   return (
     <div className="space-y-8 mt-6">
       {blogPosts.map((post) => (
-        <div
+        <Link
+          // Implementar la navegación al detalle del blog
+          href={`/posts/blog/${post.id}`}
           key={post.id}
-          className="rounded-lg p-6 hover:bg-gray-800 transition-colors cursor-pointer"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center">
-              <User className="text-gray-300 w-4 h-4" />{" "}
+          <div
+            key={post.id}
+            className="rounded-lg p-6 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center">
+                <User className="text-gray-300 w-4 h-4" />{" "}
+              </div>
+              <h3 className="font-semibold text-white text-sm">
+                {post.author.user.username}
+              </h3>
             </div>
-            <h3 className="font-semibold text-white text-sm">
-              {post.author.user.username}
-            </h3>
+
+            <h2 className="text-3xl font-extrabold text-white mb-2 leading-tight">
+              {post.title}
+            </h2>
+
+            {/* Subtitle/Description - Matching the image's second line */}
+            <p className="text-lg text-gray-400 mb-4">
+              {post.blogContent.subtitle}
+            </p>
+
+            {/* Metadata/Stats Section - Mimicking the "4d ago 438 17" row */}
+            <div className="flex items-center text-gray-400 text-sm mt-4">
+              <span className="mr-4">{getTimeAgo(post.createdAt)}</span>
+
+              {/* Reactions (438) - Using a placeholder until actual data is available */}
+              <div className="flex items-center mr-4">
+                <Heart size={16} className="mr-1" />
+                <span className="font-medium">
+                  {(post as any).placeholderReactions || 0}
+                </span>
+              </div>
+
+              {/* Comments (17) - Using a placeholder until actual data is available */}
+              <div className="flex items-center">
+                <MessageCircle size={16} className="mr-1" />
+                <span className="font-medium">
+                  {(post as any).placeholderComments || 0}
+                </span>
+              </div>
+            </div>
           </div>
-
-          <h2 className="text-3xl font-extrabold text-white mb-2 leading-tight">
-            {post.title}
-          </h2>
-
-          {/* Subtitle/Description - Matching the image's second line */}
-          <p className="text-lg text-gray-400 mb-4">
-            {post.blogContent.subtitle}
-          </p>
-
-          {/* Metadata/Stats Section - Mimicking the "4d ago 438 17" row */}
-          <div className="flex items-center text-gray-400 text-sm mt-4">
-            <span className="mr-4">{getTimeAgo(post.createdAt)}</span>
-
-            {/* Reactions (438) - Using a placeholder until actual data is available */}
-            <div className="flex items-center mr-4">
-              <Heart size={16} className="mr-1" />
-              <span className="font-medium">
-                {(post as any).placeholderReactions || 0}
-              </span>
-            </div>
-
-            {/* Comments (17) - Using a placeholder until actual data is available */}
-            <div className="flex items-center">
-              <MessageCircle size={16} className="mr-1" />
-              <span className="font-medium">
-                {(post as any).placeholderComments || 0}
-              </span>
-            </div>
-          </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

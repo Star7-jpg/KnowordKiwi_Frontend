@@ -170,13 +170,14 @@ export default function CreateBlogPost() {
         communityId: communityId,
       };
 
-      await createBlogPost(blogData);
+      const response = await createBlogPost(blogData);
+      const blogTitle = response.title || "Tu blog";
       localStorage.removeItem("blogDraft");
 
       setModal({
         isOpen: true,
         title: "Contenido publicado",
-        message: "Tu blog ha sido publicado exitosamente en la comunidad.",
+        message: `${blogTitle} ha sido publicado exitosamente en la comunidad.`,
         onConfirm: () => {
           setModal({ ...modal, isOpen: false });
           router.push(`/communities/community/${communityId}`); // Redirigir a la comunidad
