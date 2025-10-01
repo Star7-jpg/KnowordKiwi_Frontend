@@ -26,12 +26,14 @@ export default function ErrorMessageScreen({ error }: ErrorMessageScreenProps) {
         <h2 className="text-2xl font-bold text-gray-200">
           ¡Ups! Algo salió mal
         </h2>
-        <p className="text-gray-400">
-          No pudimos conectar con el servidor. ¡Pero no te preocupes! Estamos
-          trabajando para solucionarlo.
-        </p>
-        <p className="text-sm text-error font-medium">{error}</p>
-
+        {(error && (
+          <p className="text-sm text-error font-medium">{error}</p>
+        )) || (
+          <p className="text-gray-400">
+            No pudimos conectar con el servidor. ¡Pero no te preocupes! Estamos
+            trabajando para solucionarlo.
+          </p>
+        )}
         <button
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition"
