@@ -5,6 +5,7 @@ import { Image as ImageIcon, Upload } from "lucide-react";
 import { Editor } from "@tiptap/react";
 import { useRef, useState } from "react";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
+import InfoModal from "@/components/shared/InfoModal";
 
 interface ImageUploadProps {
   editor: Editor | null;
@@ -13,6 +14,7 @@ interface ImageUploadProps {
 export default function ImageUpload({ editor }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -22,13 +24,13 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
 
     // Validar que el archivo sea una imagen
     if (!file.type.startsWith("image/")) {
-      alert("Por favor, selecciona un archivo de imagen válido.");
+      setError("Por favor, selecciona un archivo de imagen.");
       return;
     }
 
     // Validar tamaño máximo (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen es demasiado grande. El tamaño máximo es 5MB.");
+      setError("La imagen es demasiado grande. El tamaño máximo es 5MB.");
       return;
     }
 
@@ -41,7 +43,7 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
       editor.chain().focus().setImage({ src: imageUrl }).run();
     } catch (error) {
       console.error("Error al subir la imagen:", error);
-      alert("Error al subir la imagen. Por favor, inténtalo de nuevo.");
+      setError("Error al subir la imagen. Por favor, inténtalo de nuevo.");
     } finally {
       setIsUploading(false);
       // Limpiar el input
@@ -81,6 +83,13 @@ export default function ImageUpload({ editor }: ImageUploadProps) {
         className="hidden"
         disabled={isUploading}
       />
+      {error && (
+        <InfoModal
+          isOpen={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </>
   );
 }
