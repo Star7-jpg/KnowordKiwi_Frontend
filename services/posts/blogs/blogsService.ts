@@ -52,3 +52,13 @@ export const updateBlogPost = async (id: number, data: Partial<BlogPost>) => {
     throw error;
   }
 };
+
+export const deleteBlogPost = async (id: number) => {
+  try {
+    const response = await privateApiClient.delete(`/posts/blogs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting blog post:", error);
+    throw error;
+  }
+};

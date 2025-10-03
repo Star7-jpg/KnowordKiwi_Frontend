@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MessageCircle, Heart, User, Edit3 } from "lucide-react";
-import { getBlogPostById } from "@/services/posts/blogs/blogsService"; // You'll need to implement this
+import { MessageCircle, Heart, User, Edit3, Trash2 } from "lucide-react";
+import {
+  getBlogPostById,
+  deleteBlogPost,
+} from "@/services/posts/blogs/blogsService";
 import { BlogById } from "@/types/posts/blog/blogById";
+import Modal from "@/components/shared/BlogModal";
 
 export default function BlogDetailPage() {
   const { id } = useParams();
@@ -12,6 +16,12 @@ export default function BlogDetailPage() {
   const [blogPost, setBlogPost] = useState<BlogById | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -66,6 +76,39 @@ export default function BlogDetailPage() {
     router.push(`/posts/blog/edit/${id}`);
   };
 
+  const confirmDelete = () => {
+    setModal({
+      isOpen: true,
+      title: "Eliminar blog",
+      message: `¿Estás seguro de que deseas eliminar "${blogPost.title}"? Esta acción no se puede deshacer.`,
+      onConfirm: handleDelete,
+    });
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteBlogPost(Number(id));
+      setModal({
+        ...modal,
+        isOpen: false,
+      });
+      router.push("/profile/me");
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      setModal({
+        ...modal,
+        isOpen: false,
+      });
+      // Mostrar un mensaje de error si falla la eliminación
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: "No se pudo eliminar el blog. Por favor, inténtalo de nuevo.",
+        onConfirm: () => setModal({ ...modal, isOpen: false }),
+      });
+    }
+  };
+
   return (
     <article className="max-w-4xl mx-auto px-4 py-8">
       <header className="mb-8">
@@ -77,19 +120,28 @@ export default function BlogDetailPage() {
             <h3 className="font-semibold text-white">
               {blogPost.author.user.username}
             </h3>
-            <p className="text-sm text-gray-400">Hace 5 días</p>{' '}
+            <p className="text-sm text-gray-400">Hace 5 días</p>{" "}
             {/* You may want to implement a proper time
    ago function */}
           </div>
-          
+
           {currentUserIsAuthor && (
-            <button
-              onClick={handleEdit}
-              className="ml-auto flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-            >
-              <Edit3 size={16} />
-              Editar
-            </button>
+            <>
+              <button
+                onClick={handleEdit}
+                className="ml-auto flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+              >
+                <Edit3 size={16} />
+                Editar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="ml-2 flex items-center gap-1 px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                <Trash2 size={16} />
+                Eliminar
+              </button>
+            </>
           )}
         </div>
 
@@ -117,6 +169,15 @@ export default function BlogDetailPage() {
           dangerouslySetInnerHTML={{ __html: blogPost.blogContent.content }}
         />
       </div>
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        onConfirm={modal.onConfirm}
+      >
+        {modal.message}
+      </Modal>
     </article>
   );
 }
