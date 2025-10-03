@@ -15,7 +15,6 @@ import {
 import { CommunityWithOwnership } from "@/types/community";
 import LeaveCommunityModal from "../../components/modals/LeaveCommunityModal";
 import PostsComponent from "../../components/ui/posts/PostsComponent";
-import { unknown } from "zod";
 
 export default function CommunityDetail() {
   const params = useParams();

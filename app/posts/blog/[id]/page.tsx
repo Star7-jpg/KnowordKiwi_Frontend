@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { MessageCircle, Heart, User } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { MessageCircle, Heart, User, Edit3 } from "lucide-react";
 import { getBlogPostById } from "@/services/posts/blogs/blogsService"; // You'll need to implement this
-import { BlogById } from "@/types/posts/blog";
+import { BlogById } from "@/types/posts/blog/blogById";
 
 export default function BlogDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [blogPost, setBlogPost] = useState<BlogById | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,14 @@ export default function BlogDetailPage() {
     );
   }
 
+  // Para esta implementación, asumiremos que el usuario actual es el autor
+  // En una implementación real, esto se verificaría con el ID del usuario actual
+  const currentUserIsAuthor = true; // TODO: Implementar verificación real de autoría
+
+  const handleEdit = () => {
+    router.push(`/posts/blog/edit/${id}`);
+  };
+
   return (
     <article className="max-w-4xl mx-auto px-4 py-8">
       <header className="mb-8">
@@ -68,10 +77,20 @@ export default function BlogDetailPage() {
             <h3 className="font-semibold text-white">
               {blogPost.author.user.username}
             </h3>
-            <p className="text-sm text-gray-400">Hace 5 días</p>{" "}
+            <p className="text-sm text-gray-400">Hace 5 días</p>{' '}
             {/* You may want to implement a proper time
    ago function */}
           </div>
+          
+          {currentUserIsAuthor && (
+            <button
+              onClick={handleEdit}
+              className="ml-auto flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+            >
+              <Edit3 size={16} />
+              Editar
+            </button>
+          )}
         </div>
 
         <h1 className="text-4xl font-bold text-white mb-4">{blogPost.title}</h1>

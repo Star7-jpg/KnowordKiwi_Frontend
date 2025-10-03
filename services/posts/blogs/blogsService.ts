@@ -35,10 +35,20 @@ export const getBlogPostById = async (id: number) => {
 
 export const getBlogPostsByUser = async () => {
   try {
-    const response = await privateApiClient.get(`/posts/blogs/author/}`);
+    const response = await privateApiClient.get(`/posts/blogs/author/all`);
     return response.data;
   } catch (error) {
     console.error("Error getting blog posts by user:", error);
+    throw error;
+  }
+};
+
+export const updateBlogPost = async (id: number, data: Partial<BlogPost>) => {
+  try {
+    const response = await privateApiClient.patch(`/posts/blogs/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating blog post:", error);
     throw error;
   }
 };

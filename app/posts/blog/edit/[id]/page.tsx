@@ -1,32 +1,34 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@headlessui/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BlogById } from "@/types/posts/blog/blogById";
+import { BlogPost } from "@/types/posts/blog/blog";
+import Modal from "@/components/shared/BlogModal";
+import {
+  getBlogPostById,
+  updateBlogPost,
+} from "@/services/posts/blogs/blogsService";
 import BlogPreview from "../../components/BlogPreview";
 import BlogHeader from "../../components/CreateBlogHeader";
 import Tiptap from "../../components/TipTap";
-import { BlogDraft, BlogPost } from "@/types/posts/blog";
-import Modal from "@/components/shared/BlogModal";
-import { createBlogPost } from "@/services/posts/blogs/blogsService";
-import {
-  blogPostSchema,
-  type BlogPostFormData,
-} from "@/app/posts/blog/schemas";
 import { useDebounce } from "../../hooks/useDebounce";
+import { BlogPostFormData, blogPostSchema } from "../../schemas";
 import { DOM_PURIFY_CONFIG } from "../../config/dom-purify.config";
-
-type SavingStatus = "idle" | "saving" | "saved";
 
 const sanitizeContent = (content: string) => {
   return DOMPurify.sanitize(content, DOM_PURIFY_CONFIG);
 };
 
-export default function CreateBlogPost() {
+type SavingStatus = "idle" | "saving" | "saved";
+
+export default function EditBlogPost() {
   const params = useParams();
-  const communityId = Number(params.communityId);
+  const id = Number(params.id);
   const router = useRouter();
 
   const {
@@ -53,45 +55,53 @@ export default function CreateBlogPost() {
     message: "",
     onConfirm: () => {},
   });
+  const [loading, setLoading] = useState(true);
 
-  // Cargar borrador si existe
+  // Cargar datos del blog existente
   useEffect(() => {
-    const savedDraft = localStorage.getItem("blogDraft");
-    if (savedDraft) {
+    const fetchBlogPost = async () => {
       try {
-        const draft: BlogDraft = JSON.parse(savedDraft);
-        setValue("title", draft.title);
-        setValue("subtitle", draft.subtitle);
-        const sanitizedContent = sanitizeContent(draft.content);
+        setLoading(true);
+        const data: BlogById = await getBlogPostById(id);
+
+        // Establecer valores iniciales con los datos existentes
+        setValue("title", data.title);
+        setValue("subtitle", data.blogContent.subtitle);
+        const sanitizedContent = sanitizeContent(data.blogContent.content);
         setValue("content", sanitizedContent);
-      } catch (e) {
-        console.error("Error al cargar el borrador:", e);
-        // Si hay un error, limpiar el borrador corrupto
-        localStorage.removeItem("blogDraft");
+      } catch (error) {
+        console.error("Error fetching blog post for editing:", error);
+        setModal({
+          isOpen: true,
+          title: "Error",
+          message: "No se pudo cargar el blog para editar.",
+          onConfirm: () => {
+            setModal({ ...modal, isOpen: false });
+            router.push(`/posts/blog/${id}`);
+          },
+        });
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (id) {
+      fetchBlogPost();
     }
-  }, [setValue]);
+  }, [id, setValue, router, modal]);
 
   // Función para guardar el borrador
   const saveDraft = useCallback(() => {
     setSavingStatus("saving");
-    const formData = getValues();
-    const sanitizedContent = sanitizeContent(formData.content);
-    const draft: BlogDraft = {
-      title: formData.title,
-      subtitle: formData.subtitle,
-      content: sanitizedContent,
-      lastSaved: new Date(),
-    };
-    localStorage.setItem("blogDraft", JSON.stringify(draft));
-
+    // En la edición, el guardado automático puede ser el mismo que el manual
+    // ya que estamos actualizando un post existente
     setTimeout(() => {
       setSavingStatus("saved");
       setTimeout(() => {
         setSavingStatus("idle");
       }, 2000);
     }, 1000);
-  }, [getValues]);
+  }, []);
 
   // Crear versión debounce de la función de guardado
   const debouncedSaveDraft = useDebounce(saveDraft, 1500);
@@ -102,16 +112,23 @@ export default function CreateBlogPost() {
 
   // Efecto para guardar automáticamente cuando cambian título o contenido
   useEffect(() => {
-    debouncedSaveDraft();
-  }, [watchedTitle, watchedContent, watchedSubtitle, debouncedSaveDraft]);
+    if (!loading) {
+      debouncedSaveDraft();
+    }
+  }, [
+    watchedTitle,
+    watchedContent,
+    watchedSubtitle,
+    debouncedSaveDraft,
+    loading,
+  ]);
 
   const handleSave = async () => {
     saveDraft();
     setModal({
       isOpen: true,
       title: "Borrador guardado",
-      message:
-        "Tu borrador ha sido guardado exitosamente en el almacenamiento local.",
+      message: "Tu borrador ha sido guardado temporalmente.",
       onConfirm: () => setModal({ ...modal, isOpen: false }),
     });
   };
@@ -132,32 +149,30 @@ export default function CreateBlogPost() {
   const onSubmit = async (data: BlogPostFormData) => {
     try {
       const sanitizedContent = sanitizeContent(data.content);
-      const blogData: BlogPost = {
+      const blogData: Partial<BlogPost> = {
         title: data.title,
         subtitle: data.subtitle,
         content: sanitizedContent,
-        communityId: communityId,
+        // communityId no se puede cambiar en la edición
       };
 
-      const response = await createBlogPost(blogData);
-      const blogTitle = response.title || "Tu blog";
-      localStorage.removeItem("blogDraft");
+      await updateBlogPost(id, blogData);
 
       setModal({
         isOpen: true,
-        title: "Contenido publicado",
-        message: `${blogTitle} ha sido publicado exitosamente en la comunidad.`,
+        title: "Cambios guardados",
+        message: "Tu blog ha sido actualizado exitosamente.",
         onConfirm: () => {
           setModal({ ...modal, isOpen: false });
-          router.push(`/communities/community/${communityId}`); // Redirigir a la comunidad
+          router.push(`/posts/blog/${id}`); // Redirigir a la vista del blog editado
         },
       });
     } catch (error) {
-      console.error("Error al crear el blog:", error);
+      console.error("Error al actualizar el blog:", error);
       setModal({
         isOpen: true,
         title: "¡Ups! Algo salió mal",
-        message: "Tu blog no ha podido ser publicado en la comunidad.",
+        message: "Tu blog no ha podido ser actualizado.",
         onConfirm: () => setModal({ ...modal, isOpen: false }),
       });
     }
@@ -167,9 +182,17 @@ export default function CreateBlogPost() {
     setIsPreviewMode(!isPreviewMode);
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const savingStatusText = {
-    saving: "Guardando...",
-    saved: "Guardado",
+    saving: "Guardando cambios...",
+    saved: "Cambios guardados",
   };
 
   return (
@@ -180,7 +203,7 @@ export default function CreateBlogPost() {
         onCancel={handleCancel}
         onTogglePreview={handleTogglePreview}
         isPreviewMode={isPreviewMode}
-        isEditing={false}
+        isEditing={true}
       />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center h-5">

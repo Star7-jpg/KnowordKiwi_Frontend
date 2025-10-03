@@ -1,6 +1,6 @@
-import BlogLayout from '../../components/BlogLayout';
+import BlogLayout from '../components/BlogLayout';
 
-export default function CreateBlogLayout({
+export default function EditBlogLayout({
   children,
 }: {
   children: React.ReactNode;
