@@ -17,6 +17,7 @@ import {
 } from "@/app/posts/blog/schemas";
 import { useDebounce } from "../../hooks/useDebounce";
 import { DOM_PURIFY_CONFIG } from "../../config/dom-purify.config";
+import CreateQuiz from "../../components/quiz/CreateQuiz";
 
 type SavingStatus = "idle" | "saving" | "saved";
 
@@ -263,27 +264,32 @@ export default function CreateBlogPost() {
           content={getValues("content")}
         />
       ) : (
-        <div className="relative">
-          <Controller
-            name="content"
-            control={control}
-            render={({ field: { onChange, value } }) => (
-              <Tiptap
-                content={value}
-                onChange={(newContent) => {
-                  onChange(newContent);
-                  // Actualizar el contenido en el formulario
-                  setValue("content", newContent, { shouldValidate: true });
-                }}
-              />
+        <>
+          <div className="relative">
+            <Controller
+              name="content"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Tiptap
+                  content={value}
+                  onChange={(newContent) => {
+                    onChange(newContent);
+                    // Actualizar el contenido en el formulario
+                    setValue("content", newContent, { shouldValidate: true });
+                  }}
+                />
+              )}
+            />
+            {errors.content && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.content.message}
+              </p>
             )}
-          />
-          {errors.content && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors.content.message}
-            </p>
-          )}
-        </div>
+          </div>
+          <div>
+            <CreateQuiz />
+          </div>
+        </>
       )}
 
       <Modal
