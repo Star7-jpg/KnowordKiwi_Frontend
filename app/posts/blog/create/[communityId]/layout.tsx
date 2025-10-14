@@ -1,4 +1,4 @@
-import BlogLayout from '../../components/BlogLayout';
+import BlogLayout from "../../components/blog/BlogLayout";
 
 export default function CreateBlogLayout({
   children,

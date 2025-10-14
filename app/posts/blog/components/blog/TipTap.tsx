@@ -9,7 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import MenuBar from "./MenuBar";
-import { Youtube } from "../extensions/Youtube";
+import { Youtube } from "../../extensions/Youtube";
 import { uploadToCloudinary } from "@/services/cloudinary/cloudinaryService";
 
 interface TipTapProps {

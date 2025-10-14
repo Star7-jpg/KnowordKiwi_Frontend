@@ -14,11 +14,13 @@ export default function BlogPreview({ title, content }: BlogPreviewProps) {
 
   useEffect(() => {
     // Importar DOMPurify dinámicamente solo en el lado del cliente
-    import("isomorphic-dompurify").then((DOMPurify) => {
+    import("isomorphic-dompurify").then((module) => {
+      const DOMPurify = module.default; // Acceder a la exportación por defecto
       setSanitizedContent(
         DOMPurify.sanitize(
           content || "<p>El contenido del blog aparecerá aqui...</p>",
           {
+            // Configuración de DOMPurify
             ALLOWED_TAGS: [
               "p",
               "br",
@@ -55,11 +57,6 @@ export default function BlogPreview({ title, content }: BlogPreviewProps) {
               "data-youtube-video",
             ],
             ADD_ATTR: ["allowfullscreen"],
-            ALLOWED_IFRAME_HOSTNAMES: [
-              "www.youtube.com",
-              "youtube.com",
-              "youtu.be",
-            ],
           },
         ),
       );
