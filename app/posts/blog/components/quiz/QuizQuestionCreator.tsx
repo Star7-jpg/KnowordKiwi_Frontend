@@ -1,11 +1,31 @@
+import { Question } from "@/types/posts/quiz/question";
+import { Option } from "@/types/posts/quiz/option";
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@headlessui/react";
 
-// Colores personalizados basados en la imagen (puedes definirlos en tailwind.config.js o usarlos inline)
-// bg-purple-600, bg-yellow-500, bg-green-500, bg-red-600
+interface QuizQuestionCreatorProps {
+  onQuestionSubmit: (question: Question) => void;
+}
 
-const QuizQuestionCreator = ({ onQuestionSubmit }) => {
-  const [questionTitle, setQuestionTitle] = useState("");
-  const [options, setOptions] = useState([
+const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
+  onQuestionSubmit,
+}) => {
+  const {
+    register,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<QuizQuestionFormData>({
+    resolver: zodResolver(quizQuestionSchema),
+    mode: "onChange",
+  });
+
+  const questionTitle = watch("questionTitle");
+
+  const [options, setOptions] = useState<Option[]>([
     {
       text: "",
       isCorrect: false,
@@ -26,15 +46,17 @@ const QuizQuestionCreator = ({ onQuestionSubmit }) => {
     },
     { text: "", isCorrect: false, id: "D", color: "bg-red-600 border-red-600" },
   ]);
-  const [selectedCorrectOption, setSelectedCorrectOption] = useState(null);
+  const [selectedCorrectOption, setSelectedCorrectOption] = useState<
+    string | null
+  >(null);
 
-  const handleOptionTextChange = (index, value) => {
+  const handleOptionTextChange = (index: number, value: string) => {
     const newOptions = [...options];
     newOptions[index].text = value;
     setOptions(newOptions);
   };
 
-  const handleCorrectOptionChange = (id) => {
+  const handleCorrectOptionChange = (id: string) => {
     const newOptions = options.map((option) => ({
       ...option,
       isCorrect: option.id === id,
@@ -43,7 +65,7 @@ const QuizQuestionCreator = ({ onQuestionSubmit }) => {
     setSelectedCorrectOption(id);
   };
 
-  const handleSubmit = () => {
+  const onSubmit = () => {
     if (
       !questionTitle.trim() ||
       options.some((opt) => !opt.text.trim()) ||
@@ -54,16 +76,13 @@ const QuizQuestionCreator = ({ onQuestionSubmit }) => {
       );
       return;
     }
-    const newQuestion = {
+    const newQuestion: Question = {
       question: questionTitle,
       // Las opciones se mapean para eliminar propiedades innecesarias y solo mantener text y isCorrect.
       options: options.map(({ text, isCorrect }) => ({ text, isCorrect })),
     };
     onQuestionSubmit(newQuestion);
-    // Opcional: Resetear el formulario
-    setQuestionTitle("");
-    setOptions(options.map((opt) => ({ ...opt, text: "", isCorrect: false })));
-    setSelectedCorrectOption(null);
+    reset();
   };
 
   return (
@@ -83,13 +102,17 @@ const QuizQuestionCreator = ({ onQuestionSubmit }) => {
         >
           Título de la Pregunta:
         </label>
-        <textarea
+        <Input
           id="question-text"
-          className="w-full p-4 border border-gray-700 rounded-xl bg-bg-gray text-white placeholder-gray-500 focus:ring-orange-500 focus:border-orange-500 transition duration-200 resize-none h-24 shadow-inner"
-          value={questionTitle}
-          onChange={(e) => setQuestionTitle(e.target.value)}
+          className="w-full p-4 border border-gray-700 rounded-xl bg-bg-gray placeholder-gray-500 focus:ring-primary focus:border-primary-hover transition duration-200"
           placeholder="Escribe el texto de tu pregunta aquí..."
+          {...register("questionTitle")}
         />
+        {errors.questionTitle && (
+          <p className="text-error text-sm mt-1">
+            {errors.questionTitle.message}
+          </p>
+        )}
       </div>
 
       {/* Opciones de Respuesta */}
@@ -130,10 +153,7 @@ const QuizQuestionCreator = ({ onQuestionSubmit }) => {
       </div>
 
       {/* Botón de Guardar */}
-      <button
-        className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-extrabold text-xl rounded-xl transition duration-200 shadow-xl hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 transform hover:-translate-y-0.5"
-        onClick={handleSubmit}
-      >
+      <button className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-extrabold text-xl rounded-xl transition duration-200 shadow-xl hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 transform hover:-translate-y-0.5">
         Guardar Pregunta
       </button>
     </div>

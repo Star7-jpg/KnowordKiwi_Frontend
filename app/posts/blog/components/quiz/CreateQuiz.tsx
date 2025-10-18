@@ -5,9 +5,13 @@ import QuizQuestionCreator from "./QuizQuestionCreator";
 export default function CreateQuiz() {
   const [quizEnabled, setQuizEnabled] = useState(false);
 
+  const onQuestionSubmit = (question) => {
+    console.log("Nueva pregunta añadida:", question);
+  };
+
   const enableQuizGenetator = () => {
     if (quizEnabled) {
-      return <QuizQuestionCreator />;
+      return <QuizQuestionCreator onQuestionSubmit={onQuestionSubmit} />;
     }
   };
 
