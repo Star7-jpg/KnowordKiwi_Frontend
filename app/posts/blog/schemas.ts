@@ -30,7 +30,10 @@ export const quizQuestionSchema = z.object({
         isCorrect: z.boolean(),
       }),
     )
-    .min(4, "La pregunta debe tener 4 opciones"),
+    .min(4, "La pregunta debe tener 4 opciones")
+    .refine((options) => options.some((opt) => opt.isCorrect), {
+      message: "Debe haber al menos una opción marcada como correcta",
+    }),
 });
 
 export type BlogPostFormData = z.infer<typeof blogPostSchema>;

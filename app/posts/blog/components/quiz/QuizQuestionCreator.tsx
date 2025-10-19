@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@headlessui/react";
+import { Button, Input } from "@headlessui/react";
+import InfoModal from "@/components/shared/InfoModal";
 
 interface QuizQuestionCreatorProps {
   onQuestionSubmit: (question: Question) => void;
@@ -21,6 +22,15 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   } = useForm<QuizQuestionFormData>({
     resolver: zodResolver(quizQuestionSchema),
     mode: "onChange",
+    defaultValues: {
+      questionTitle: "",
+      options: [
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+      ],
+    },
   });
 
   const questionTitle = watch("questionTitle");
@@ -49,6 +59,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   const [selectedCorrectOption, setSelectedCorrectOption] = useState<
     string | null
   >(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleOptionTextChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -71,8 +82,8 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
       options.some((opt) => !opt.text.trim()) ||
       !selectedCorrectOption
     ) {
-      alert(
-        "Por favor, completa la pregunta y todas las opciones, y selecciona la respuesta correcta.",
+      setErrorMessage(
+        "Por favor, completa el título de la pregunta, todas las opciones y selecciona la respuesta correcta.",
       );
       return;
     }
@@ -82,7 +93,35 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
       options: options.map(({ text, isCorrect }) => ({ text, isCorrect })),
     };
     onQuestionSubmit(newQuestion);
+    // Reiniciar el formulario después de enviar
     reset();
+    setOptions([
+      {
+        text: "",
+        isCorrect: false,
+        id: "A",
+        color: "bg-purple-600 border-purple-600",
+      },
+      {
+        text: "",
+        isCorrect: false,
+        id: "B",
+        color: "bg-yellow-500 border-yellow-500",
+      },
+      {
+        text: "",
+        isCorrect: false,
+        id: "C",
+        color: "bg-green-500 border-green-500",
+      },
+      {
+        text: "",
+        isCorrect: false,
+        id: "D",
+        color: "bg-red-600 border-red-600",
+      },
+    ]);
+    setSelectedCorrectOption(null);
   };
 
   return (
@@ -109,11 +148,16 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
           {...register("questionTitle")}
         />
         {errors.questionTitle && (
-          <p className="text-error text-sm mt-1">
+          <p className="text-gray-400 text-sm mt-1">
             {errors.questionTitle.message}
           </p>
         )}
       </div>
+
+      <p className="mb-5 text-gray-400">
+        Selecciona la respuesta correcta y escribe todas las opciones para tu
+        pregunta.
+      </p>
 
       {/* Opciones de Respuesta */}
       <div className="grid grid-cols-2 gap-5 mb-10">
@@ -153,9 +197,19 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
       </div>
 
       {/* Botón de Guardar */}
-      <button className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-extrabold text-xl rounded-xl transition duration-200 shadow-xl hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 transform hover:-translate-y-0.5">
+      <Button
+        onClick={onSubmit}
+        className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-extrabold text-xl rounded-xl transition duration-200 shadow-xl hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 transform hover:-translate-y-0.5"
+      >
         Guardar Pregunta
-      </button>
+      </Button>
+      {errorMessage && (
+        <InfoModal
+          isOpen={!!errorMessage}
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
     </div>
   );
 };
