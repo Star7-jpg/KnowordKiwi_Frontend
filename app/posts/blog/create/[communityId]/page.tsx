@@ -30,6 +30,9 @@ export default function CreateBlogPost() {
   const communityId = Number(params.communityId);
   const router = useRouter();
 
+  // TODO: Cambiar por una implementacion real
+  const postId = 1;
+
   const {
     control,
     handleSubmit: handleSubmitForm,
@@ -287,7 +290,7 @@ export default function CreateBlogPost() {
             )}
           </div>
           <div>
-            <CreateQuiz />
+            <CreateQuiz postId={postId} />
           </div>
         </>
       )}

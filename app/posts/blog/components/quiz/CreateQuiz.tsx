@@ -2,16 +2,27 @@ import { Field, Label, Switch } from "@headlessui/react";
 import { useState } from "react";
 import QuizQuestionCreator from "./QuizQuestionCreator";
 
-export default function CreateQuiz() {
+interface CreateQuizProps {
+  postId: number;
+}
+
+export default function CreateQuiz({ postId }: CreateQuizProps) {
   const [quizEnabled, setQuizEnabled] = useState(false);
 
-  const onQuestionSubmit = (question) => {
-    console.log("Nueva pregunta añadida:", question);
+  const handleQuizComplete = () => {
+    console.log("Quiz guardado exitosamente");
+    // Here you can show a success message or update UI state
+    setQuizEnabled(false); // Optionally reset the state
   };
 
   const enableQuizGenetator = () => {
     if (quizEnabled) {
-      return <QuizQuestionCreator onQuestionSubmit={onQuestionSubmit} />;
+      return (
+        <QuizQuestionCreator 
+          postId={postId} 
+          onComplete={handleQuizComplete} 
+        />
+      );
     }
   };
 
