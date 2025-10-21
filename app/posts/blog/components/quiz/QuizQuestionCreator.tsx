@@ -10,13 +10,15 @@ import { questionsService } from "@/services/questions/questionsService";
 import { Trash } from "lucide-react";
 
 interface QuizQuestionCreatorProps {
-  postId: number;
+  postId?: number; // Optional - only provided when adding to existing post
   onComplete: () => void;
+  onQuestionsChange?: (questions: any[]) => void; // Callback to notify parent of question changes
 }
 
 const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   postId,
   onComplete,
+  onQuestionsChange,
 }) => {
   const {
     register,
@@ -151,30 +153,43 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }
 
     setIsSubmitting(true);
+    
     try {
-      // Send the questions to the backend
-      await questionsService.createManyQuestions({
-        postId: postId,
-        questions: questions.map((q) => ({
-          title: q.question,
-          options: q.options,
-        })),
-      });
+      // If postId is provided, we're adding questions to an existing post
+      if (postId) {
+        // Send the questions to the backend using the createManyQuestions endpoint
+        await questionsService.createManyQuestions({
+          postId: postId,
+          questions: questions.map(q => ({
+            title: q.question,
+            options: q.options
+          }))
+        });
 
-      // Notify parent component that quiz creation is complete
-      onComplete();
+        // Notify parent component that quiz creation is complete
+        onComplete();
+      } else {
+        // If no postId, we're creating questions for a new blog post
+        // In this case, we just pass the questions back to the parent
+        // since the blog post creation will handle saving them together
+        onQuestionsChange?.(questions.map(q => ({
+          title: q.question,
+          options: q.options
+        })));
+        
+        // Notify parent component that quiz creation is complete
+        onComplete();
+      }
     } catch (error) {
       console.error("Error creating questions:", error);
-      setErrorMessage(
-        "Ocurrió un error al guardar las preguntas. Por favor intenta de nuevo.",
-      );
+      setErrorMessage("Ocurrió un error al guardar las preguntas. Por favor intenta de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full p-8 my-8 rounded-md shadow-2xl text-gray-100 font-sans bg-gray-900">
+    <div className="w-full p-8 my-8 text-gray-100 font-sans">
       {/* Encabezado */}
       <div className="text-center mb-8">
         <h3 className="text-2xl font-extrabold text-white">Crear Nuevo Quiz</h3>

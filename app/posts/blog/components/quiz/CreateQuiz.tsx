@@ -1,26 +1,31 @@
 import { Field, Label, Switch } from "@headlessui/react";
 import { useState } from "react";
 import QuizQuestionCreator from "./QuizQuestionCreator";
+import InfoModal from "@/components/shared/InfoModal";
 
 interface CreateQuizProps {
-  postId: number;
+  postId?: number; // Optional - if provided, we're adding to existing post
+  onQuestionsChange?: (questions: any[]) => void; // Callback for when creating with blog
 }
 
-export default function CreateQuiz({ postId }: CreateQuizProps) {
+export default function CreateQuiz({
+  postId,
+  onQuestionsChange,
+}: CreateQuizProps) {
   const [quizEnabled, setQuizEnabled] = useState(false);
+  const [quizMessage, setQuizMessage] = useState("");
 
   const handleQuizComplete = () => {
-    console.log("Quiz guardado exitosamente");
-    // Here you can show a success message or update UI state
-    setQuizEnabled(false); // Optionally reset the state
+    setQuizMessage("Quiz guardado exitosamente");
   };
 
   const enableQuizGenetator = () => {
     if (quizEnabled) {
       return (
-        <QuizQuestionCreator 
-          postId={postId} 
-          onComplete={handleQuizComplete} 
+        <QuizQuestionCreator
+          postId={postId}
+          onComplete={handleQuizComplete}
+          onQuestionsChange={onQuestionsChange}
         />
       );
     }
@@ -31,7 +36,9 @@ export default function CreateQuiz({ postId }: CreateQuizProps) {
       <div className="flex flex-col gap-4">
         <Field>
           <Label className="text-lg">
-            ¿Deseas añadir un quiz a tu publicación?
+            {postId
+              ? "¿Deseas añadir un quiz a tu publicación existente?"
+              : "¿Deseas añadir un quiz a tu nueva publicación?"}
           </Label>
         </Field>
         <Switch
@@ -43,6 +50,13 @@ export default function CreateQuiz({ postId }: CreateQuizProps) {
         </Switch>
       </div>
       {enableQuizGenetator()}
+      {quizMessage && (
+        <InfoModal
+          isOpen={!!quizMessage}
+          message={quizMessage}
+          onClose={() => setQuizMessage("")}
+        />
+      )}
     </>
   );
 }

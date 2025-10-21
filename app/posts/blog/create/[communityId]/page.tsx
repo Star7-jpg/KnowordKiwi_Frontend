@@ -30,8 +30,7 @@ export default function CreateBlogPost() {
   const communityId = Number(params.communityId);
   const router = useRouter();
 
-  // TODO: Cambiar por una implementacion real
-  const postId = 1;
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
 
   const {
     control,
@@ -141,6 +140,7 @@ export default function CreateBlogPost() {
         subtitle: data.subtitle,
         content: sanitizedContent,
         communityId: communityId,
+        questions: quizQuestions, // Añadir las preguntas del quiz
       };
 
       const response = await createBlogPost(blogData);
@@ -290,7 +290,9 @@ export default function CreateBlogPost() {
             )}
           </div>
           <div>
-            <CreateQuiz postId={postId} />
+            <CreateQuiz
+              onQuestionsChange={(questions) => setQuizQuestions(questions)}
+            />
           </div>
         </>
       )}

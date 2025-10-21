@@ -4,4 +4,8 @@ export interface BlogPost {
   content: string;
   communityId: number;
   authorUserId?: number;
+  questions?: Array<{
+    title: string;
+    options: Array<{ text: string; isCorrect: boolean }>;
+  }>;
 }
