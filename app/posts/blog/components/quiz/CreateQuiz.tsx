@@ -5,7 +5,7 @@ import InfoModal from "@/components/shared/InfoModal";
 
 interface CreateQuizProps {
   postId?: number; // Optional - if provided, we're adding to existing post
-  onQuestionsChange?: (questions: any[]) => void; // Callback for when creating with blog
+  onQuestionsChange?: (questions: any[]) => void; // Callback cuando se crea un blog y quiz juntos
 }
 
 export default function CreateQuiz({

@@ -153,17 +153,17 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // If postId is provided, we're adding questions to an existing post
       if (postId) {
         // Send the questions to the backend using the createManyQuestions endpoint
         await questionsService.createManyQuestions({
           postId: postId,
-          questions: questions.map(q => ({
+          questions: questions.map((q) => ({
             title: q.question,
-            options: q.options
-          }))
+            options: q.options,
+          })),
         });
 
         // Notify parent component that quiz creation is complete
@@ -172,17 +172,21 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         // If no postId, we're creating questions for a new blog post
         // In this case, we just pass the questions back to the parent
         // since the blog post creation will handle saving them together
-        onQuestionsChange?.(questions.map(q => ({
-          title: q.question,
-          options: q.options
-        })));
-        
+        onQuestionsChange?.(
+          questions.map((q) => ({
+            title: q.question,
+            options: q.options,
+          })),
+        );
+
         // Notify parent component that quiz creation is complete
         onComplete();
       }
     } catch (error) {
       console.error("Error creating questions:", error);
-      setErrorMessage("Ocurrió un error al guardar las preguntas. Por favor intenta de nuevo.");
+      setErrorMessage(
+        "Ocurrió un error al guardar las preguntas. Por favor intenta de nuevo.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -213,7 +217,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
       </div>
 
       {/* Formulario para nueva pregunta */}
-      <div className="mb-10 p-6 bg-gray-800 rounded-xl border border-gray-700">
+      <div className="mb-10 p-6  rounded-xl">
         <h4 className="text-xl font-bold text-white mb-4">
           Agregar Nueva Pregunta
         </h4>
@@ -222,13 +226,13 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         <div className="mb-6">
           <label
             htmlFor="question-text"
-            className="block mb-3 text-lg font-medium text-gray-400"
+            className="block mb-3 text-lg font-medium text-gray-300"
           >
             Título de la Pregunta:
           </label>
           <Input
             id="question-text"
-            className="w-full p-4 border border-gray-700 rounded-xl bg-gray-700 placeholder-gray-500 focus:ring-primary focus:border-primary-hover transition duration-200 text-white"
+            className="w-full p-4 border border-gray-700 rounded-xl bg-bg-gray placeholder-gray-500 focus:ring-primary focus:border-primary-hover transition duration-200 text-white"
             placeholder="Escribe el texto de tu pregunta aquí..."
             {...register("questionTitle")}
           />
@@ -239,7 +243,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
           )}
         </div>
 
-        <p className="mb-5 text-gray-400">
+        <p className="mb-5 text-gray-300">
           Selecciona la respuesta correcta y escribe todas las opciones para tu
           pregunta.
         </p>
@@ -252,7 +256,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
               // Clases base para la tarjeta de opción
               className={`
                 flex items-center p-4 rounded-xl cursor-pointer transition duration-300 transform hover:scale-[1.02]
-                bg-gray-700 shadow-lg border-2 border-gray-600
+                bg-bg-gray shadow-lg border-2 border-gray-600
                 ${selectedCorrectOption === option.id ? `${option.color} ring-4 ring-opacity-50 ring-offset-2 ring-offset-gray-800` : ""}
               `}
               onClick={() => handleCorrectOptionChange(option.id)}
@@ -300,7 +304,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
             {questions.map((question, index) => (
               <div
                 key={index}
-                className="p-4 bg-gray-800 rounded-xl border border-gray-700 flex justify-between items-start"
+                className="p-4 bg-bg-gray rounded-xl border border-gray-700 flex justify-between items-start"
               >
                 <div>
                   <h5 className="font-semibold text-white">
@@ -334,7 +338,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveQuestion(index)}
-                  className="text-error hover:text-red-400 ml-4 p-2 rounded-full hover:bg-red-900/20 transition duration-200"
+                  className="text-red-400 hover:text-error ml-4 p-2 rounded-full hover:bg-red-900/20 transition duration-200"
                   aria-label="Eliminar pregunta"
                 >
                   <Trash />

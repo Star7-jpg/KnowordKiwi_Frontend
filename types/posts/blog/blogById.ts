@@ -16,4 +16,12 @@ export interface BlogById {
     content: string;
     subtitle: string;
   };
+  questions?: {
+    id: number;
+    title: string;
+    options: Array<{ text: string; isCorrect: boolean }>;
+    postId: number;
+    createdAt: string;
+    updatedAt: string;
+  }[];
 }

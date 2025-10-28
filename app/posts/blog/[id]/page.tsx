@@ -9,6 +9,7 @@ import {
 } from "@/services/posts/blogs/blogsService";
 import { BlogById } from "@/types/posts/blog/blogById";
 import Modal from "@/components/shared/BlogModal";
+import QuizComponent from "../components/quiz/QuizComponent";
 
 export default function BlogDetailPage() {
   const { id } = useParams();
@@ -157,10 +158,18 @@ export default function BlogDetailPage() {
             <Heart size={18} className="mr-1" />
             {/* <span>{blogPost.reactions || 0}</span> */}
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center mr-4">
             <MessageCircle size={18} className="mr-1" />
             {/* <span>{blogPost.comments || 0}</span> */}
           </div>
+
+          {/* Quiz Indicator */}
+          {blogPost.questions && blogPost.questions.length > 0 && (
+            <div className="flex items-center text-terciary">
+              <div className="w-3 h-3 rounded-full bg-terciary mr-2 animate-pulse"></div>
+              <span className="text-sm">Quiz disponible</span>
+            </div>
+          )}
         </div>
       </header>
 
@@ -169,6 +178,29 @@ export default function BlogDetailPage() {
           dangerouslySetInnerHTML={{ __html: blogPost.blogContent.content }}
         />
       </div>
+
+      {/* Quiz Section - Only show if the blog has questions */}
+      {blogPost.questions && blogPost.questions.length > 0 && (
+        <div id="quiz-section">
+          <QuizComponent questions={blogPost.questions} />
+        </div>
+      )}
+
+      {/* Quiz navigation button for long articles */}
+      {blogPost.questions && blogPost.questions.length > 0 && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={() =>
+              document
+                .getElementById("quiz-section")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="py-2 px-4 bg-secondary hover:bg-secondary-hover text-white rounded-lg font-medium text-sm"
+          >
+            Ir al Test de Conocimiento
+          </button>
+        </div>
+      )}
 
       <Modal
         isOpen={modal.isOpen}
