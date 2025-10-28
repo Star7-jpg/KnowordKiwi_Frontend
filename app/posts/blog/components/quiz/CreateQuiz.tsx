@@ -44,7 +44,7 @@ export default function CreateQuiz({
         <Switch
           checked={quizEnabled}
           onChange={setQuizEnabled}
-          className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-800 transition data-checked:bg-secondary"
+          className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-800 transition data-checked:bg-terciary"
         >
           <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
         </Switch>

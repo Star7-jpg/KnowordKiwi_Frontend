@@ -20,20 +20,6 @@ export const quizQuestionSchema = z.object({
     .string()
     .min(5, "El título de la pregunta debe tener al menos 5 caracteres")
     .max(100, "El título de la pregunta no debe exceder los 500 caracteres"),
-  options: z
-    .array(
-      z.object({
-        text: z
-          .string()
-          .min(1, "El texto de la opción no puede estar vacío")
-          .max(100, "El texto de la opción no debe exceder los 100 caracteres"),
-        isCorrect: z.boolean(),
-      }),
-    )
-    .min(4, "La pregunta debe tener 4 opciones")
-    .refine((options) => options.some((opt) => opt.isCorrect), {
-      message: "Debe haber al menos una opción marcada como correcta",
-    }),
 });
 
 export type BlogPostFormData = z.infer<typeof blogPostSchema>;

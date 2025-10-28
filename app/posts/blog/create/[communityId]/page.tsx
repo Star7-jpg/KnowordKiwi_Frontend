@@ -210,14 +210,14 @@ export default function CreateBlogPost() {
               value={field.value}
               onChange={field.onChange}
               className={`px-4 py-3 bg-bg-gray border ${
-                errors.title ? "border-red-500" : "border-gray-700"
+                errors.title ? "border-red-400" : "border-gray-700"
               } rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
               placeholder="Escribe el título de tu blog..."
             />
           )}
         />
         {errors.title && (
-          <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
+          <p className="text-sm text-red-400 mt-1">{errors.title.message}</p>
         )}
       </div>
 
@@ -240,14 +240,14 @@ export default function CreateBlogPost() {
               value={field.value}
               onChange={field.onChange}
               className={`px-4 py-3 bg-bg-gray border ${
-                errors.subtitle ? "border-red-500" : "border-gray-700"
+                errors.subtitle ? "border-red-400" : "border-gray-700"
               } rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
               placeholder="Escribe el subtítulo atractivo para tu blog..."
             />
           )}
         />
         {errors.subtitle && (
-          <p className="text-sm text-red-500 mt-1">{errors.subtitle.message}</p>
+          <p className="text-sm text-red-400 mt-1">{errors.subtitle.message}</p>
         )}
       </div>
 
@@ -274,7 +274,7 @@ export default function CreateBlogPost() {
               )}
             />
             {errors.content && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="text-sm text-red-400 mt-1">
                 {errors.content.message}
               </p>
             )}
