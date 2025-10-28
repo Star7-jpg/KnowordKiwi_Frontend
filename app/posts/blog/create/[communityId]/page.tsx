@@ -199,11 +199,6 @@ export default function CreateBlogPost() {
               {savingStatusText[savingStatus]}
             </span>
           )}
-          {errors.title && (
-            <span className="text-xs text-error ml-2">
-              {errors.title.message}
-            </span>
-          )}
         </div>
         <Controller
           name="title"
@@ -234,11 +229,6 @@ export default function CreateBlogPost() {
           >
             Subtítulo del blog
           </label>
-          {errors.subtitle && (
-            <span className="text-xs text-error ml-2">
-              {errors.subtitle.message}
-            </span>
-          )}
         </div>
         <Controller
           name="subtitle"

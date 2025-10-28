@@ -1,6 +1,6 @@
 import { Question } from "@/types/posts/quiz/question";
 import { Option } from "@/types/posts/quiz/option";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
