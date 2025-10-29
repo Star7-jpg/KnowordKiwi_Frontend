@@ -30,12 +30,6 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     mode: "onChange",
     defaultValues: {
       questionTitle: "",
-      options: [
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-      ],
     },
   });
 
@@ -70,6 +64,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOptionTextChange = (index: number, value: string) => {
+    if (value.length > 100) return; // Limitar a 200 caracteres
     const newOptions = [...options];
     newOptions[index].text = value;
     setOptions(newOptions);
