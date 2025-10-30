@@ -9,7 +9,7 @@ import BlogPreview from "../../components/blog/BlogPreview";
 import BlogHeader from "../../components/blog/CreateBlogHeader";
 import Tiptap from "../../components/blog/TipTap";
 import { BlogDraft, BlogPost } from "@/types/posts/blog";
-import Modal from "@/components/shared/BlogModal";
+import Modal from "@/app/posts/blog/components/modals/BlogModal";
 import { createBlogPost } from "@/services/posts/blogs/blogsService";
 import {
   blogPostSchema,
@@ -254,6 +254,7 @@ export default function CreateBlogPost() {
       {isPreviewMode ? (
         <BlogPreview
           title={getValues("title")}
+          subtitle={getValues("subtitle")}
           content={getValues("content")}
         />
       ) : (
@@ -282,6 +283,7 @@ export default function CreateBlogPost() {
           <div>
             <CreateQuiz
               onQuestionsChange={(questions) => setQuizQuestions(questions)}
+              initialQuestions={quizQuestions}
             />
           </div>
         </>

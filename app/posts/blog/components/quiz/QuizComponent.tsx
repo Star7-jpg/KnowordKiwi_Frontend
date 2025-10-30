@@ -1,18 +1,34 @@
-import { useState } from 'react';
-import { Button } from '@headlessui/react';
-import { CheckCircle, XCircle, RotateCcw } from 'lucide-react';
-import { BlogById } from '@/types/posts/blog/blogById';
+import { useState } from "react";
+import { Button } from "@headlessui/react";
+import { CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { BlogById } from "@/types/posts/blog/blogById";
+
+// Define the question structure that can be used for both existing and newly created questions
+interface QuestionOption {
+  text: string;
+  isCorrect: boolean;
+}
+
+interface QuizQuestion {
+  id?: number; // Optional for newly created questions
+  title: string;
+  options: QuestionOption[];
+  // Include other properties from BlogById["questions"] if they exist
+  postId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface QuizComponentProps {
-  questions: BlogById['questions'];
+  questions: QuizQuestion[] | BlogById["questions"];
 }
 
 interface AnswerState {
-  [questionId: number]: string | null; // Stores the selected option text for each question
+  [questionId: string | number]: string | null; // Stores the selected option text for each question
 }
 
 interface SubmittedState {
-  [questionId: number]: boolean; // Whether the question has been submitted
+  [questionId: string | number]: boolean; // Whether the question has been submitted
 }
 
 const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
@@ -24,10 +40,10 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
     return null;
   }
 
-  const handleAnswerSelect = (questionId: number, optionText: string) => {
+  const handleAnswerSelect = (questionId: string | number, optionText: string) => {
     if (submitted[questionId]) return; // Don't allow changing answers after submission
-    
-    setAnswers(prev => ({
+
+    setAnswers((prev) => ({
       ...prev,
       [questionId]: optionText,
     }));
@@ -36,8 +52,10 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
   const handleSubmit = () => {
     // Mark all questions as submitted
     const newSubmitted: SubmittedState = {};
-    questions.forEach(q => {
-      newSubmitted[q.id] = true;
+    questions.forEach((q, index) => {
+      // Use the question id if available, otherwise use a temporary id based on index
+      const questionId = q.id !== undefined ? q.id : `temp-${index}`;
+      newSubmitted[questionId] = true;
     });
     setSubmitted(newSubmitted);
     setShowResults(true);
@@ -51,90 +69,99 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
 
   const calculateScore = () => {
     if (!showResults) return 0;
-    
+
     let correct = 0;
-    questions?.forEach(q => {
-      const selectedAnswer = answers[q.id];
-      const correctOption = q.options.find(opt => opt.isCorrect);
+    questions?.forEach((q) => {
+      const questionId = q.id || `temp-${questions.indexOf(q)}`; // Use index as fallback for new questions without id
+      const selectedAnswer = answers[questionId];
+      const correctOption = q.options.find((opt) => opt.isCorrect);
       if (selectedAnswer === correctOption?.text) {
         correct++;
       }
     });
-    
+
     return Math.round((correct / (questions?.length || 1)) * 100);
   };
 
   const score = calculateScore();
 
   return (
-    <div className="mt-12 p-6 bg-gray-800 rounded-xl border border-gray-700">
-      <h2 className="text-2xl font-bold text-white mb-6">Test de Conocimiento</h2>
-      
+    <div className="mt-12 p-6 bg-bg-default rounded-xl">
       <div className="space-y-8">
-        {questions.map((question) => {
-          const selectedAnswer = answers[question.id];
-          const correctOption = question.options.find(opt => opt.isCorrect);
-          const isSubmitted = submitted[question.id];
+        {questions.map((question, index) => {
+          // Use the question id if available, otherwise use a temporary id based on index
+          const questionId = question.id !== undefined ? question.id : `temp-${index}`;
+          const selectedAnswer = answers[questionId];
+          const correctOption = question.options.find((opt) => opt.isCorrect);
+          const isSubmitted = submitted[questionId];
           const isCorrect = selectedAnswer === correctOption?.text;
 
           return (
-            <div 
-              key={question.id} 
+            <div
+              key={questionId}
               className={`p-5 rounded-lg border ${
-                isSubmitted 
-                  ? isCorrect 
-                    ? 'border-green-500 bg-green-900/20' 
-                    : 'border-red-500 bg-red-900/20'
-                  : 'border-gray-600 bg-gray-700'
+                isSubmitted
+                  ? isCorrect
+                    ? "border-green-500 bg-green-900/20"
+                    : "border-red-500 bg-red-900/20"
+                  : "border-gray-600 bg-bg-gray"
               }`}
             >
               <h3 className="text-lg font-semibold text-white mb-4">
                 {question.title}
               </h3>
-              
+
               <div className="space-y-3">
                 {question.options.map((option, optionIndex) => {
                   const isSelected = selectedAnswer === option.text;
                   const shouldShowCorrect = isSubmitted && option.isCorrect;
-                  const shouldShowIncorrect = isSubmitted && isSelected && !option.isCorrect;
-                  
+                  const shouldShowIncorrect =
+                    isSubmitted && isSelected && !option.isCorrect;
+
                   return (
                     <div
                       key={optionIndex}
-                      onClick={() => !isSubmitted && handleAnswerSelect(question.id, option.text)}
+                      onClick={() =>
+                        !isSubmitted &&
+                        handleAnswerSelect(questionId, option.text)
+                      }
                       className={`
                         flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200
                         ${
                           isSubmitted
                             ? shouldShowCorrect
-                              ? 'bg-green-500/20 border border-green-500'
+                              ? "bg-green-500/20 border border-green-500"
                               : shouldShowIncorrect
-                                ? 'bg-red-500/20 border border-red-500'
-                                : 'border border-gray-600'
+                                ? "bg-red-500/20 border border-red-500"
+                                : "border border-gray-600"
                             : isSelected
-                              ? 'bg-primary/20 border border-primary'
-                              : 'border border-gray-600 hover:border-gray-500'
+                              ? "bg-primary/20 border border-primary"
+                              : "border border-gray-600 hover:border-gray-500"
                         }
                       `}
                     >
-                      <div className={`
+                      <div
+                        className={`
                         w-6 h-6 rounded-full flex items-center justify-center mr-3
                         font-bold
                         ${
                           isSubmitted
                             ? shouldShowCorrect
-                              ? 'bg-green-500 text-white'
+                              ? "bg-green-500 text-white"
                               : shouldShowIncorrect
-                                ? 'bg-red-500 text-white'
-                                : 'bg-gray-600 text-gray-300'
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-600 text-gray-300"
                             : isSelected
-                              ? 'bg-primary text-white'
-                              : 'bg-gray-700 text-gray-300'
+                              ? "bg-primary text-white"
+                              : "bg-gray-700 text-gray-300"
                         }
-                      `}>
+                      `}
+                      >
                         {String.fromCharCode(65 + optionIndex)}
                       </div>
-                      <span className="text-gray-200 flex-1">{option.text}</span>
+                      <span className="text-gray-200 flex-1">
+                        {option.text}
+                      </span>
                       {isSubmitted && option.isCorrect && (
                         <CheckCircle className="w-5 h-5 text-green-500 ml-2" />
                       )}
@@ -145,13 +172,15 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
                   );
                 })}
               </div>
-              
+
               {isSubmitted && (
-                <div className={`mt-3 text-sm ${
-                  isCorrect ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {isCorrect 
-                    ? '¡Correcto!' 
+                <div
+                  className={`mt-3 text-sm ${
+                    isCorrect ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {isCorrect
+                    ? "¡Correcto!"
                     : `Incorrecto. La respuesta correcta es: ${correctOption?.text}`}
                 </div>
               )}
@@ -159,7 +188,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
           );
         })}
       </div>
-      
+
       {!showResults ? (
         <div className="mt-8 flex justify-center">
           <Button
@@ -169,8 +198,8 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
               py-3 px-6 rounded-xl font-semibold text-lg transition duration-200
               ${
                 Object.keys(answers).length === questions.length
-                  ? 'bg-primary hover:bg-primary-hover text-white'
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  ? "bg-primary hover:bg-primary-hover text-white"
+                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
               }
             `}
           >

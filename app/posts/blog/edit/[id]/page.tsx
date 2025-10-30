@@ -8,7 +8,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BlogById } from "@/types/posts/blog/blogById";
 import { BlogPost } from "@/types/posts/blog/blog";
-import Modal from "@/components/shared/BlogModal";
+import Modal from "@/app/posts/blog/components/modals/BlogModal";
 import {
   getBlogPostById,
   updateBlogPost,

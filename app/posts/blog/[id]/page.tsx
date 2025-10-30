@@ -8,8 +8,9 @@ import {
   deleteBlogPost,
 } from "@/services/posts/blogs/blogsService";
 import { BlogById } from "@/types/posts/blog/blogById";
-import Modal from "@/components/shared/BlogModal";
 import QuizComponent from "../components/quiz/QuizComponent";
+import QuizModal from "@/app/posts/blog/components/modals/QuizModal";
+import Modal from "@/app/posts/blog/components/modals/BlogModal";
 
 export default function BlogDetailPage() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function BlogDetailPage() {
   const [blogPost, setBlogPost] = useState<BlogById | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -179,27 +181,28 @@ export default function BlogDetailPage() {
         />
       </div>
 
-      {/* Quiz Section - Only show if the blog has questions */}
-      {blogPost.questions && blogPost.questions.length > 0 && (
-        <div id="quiz-section">
-          <QuizComponent questions={blogPost.questions} />
-        </div>
-      )}
-
-      {/* Quiz navigation button for long articles */}
+      {/* Quiz Button - Only show if the blog has questions */}
       {blogPost.questions && blogPost.questions.length > 0 && (
         <div className="mt-4 text-center">
           <button
-            onClick={() =>
-              document
-                .getElementById("quiz-section")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={() => setQuizModalOpen(true)}
             className="py-2 px-4 bg-secondary hover:bg-secondary-hover text-white rounded-lg font-medium text-sm"
           >
-            Ir al Test de Conocimiento
+            Abrir Test de Conocimiento
           </button>
         </div>
+      )}
+
+      {/* Quiz Modal - Only show if the blog has questions */}
+      {blogPost.questions && blogPost.questions.length > 0 && quizModalOpen && (
+        <QuizModal
+          isOpen={quizModalOpen}
+          onClose={() => setQuizModalOpen(false)}
+          title="Test de Conocimiento"
+          showConfirmButton={false}
+        >
+          <QuizComponent questions={blogPost.questions} />
+        </QuizModal>
       )}
 
       <Modal

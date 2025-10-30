@@ -4,10 +4,15 @@ import { useState, useEffect } from "react";
 
 interface BlogPreviewProps {
   title: string;
+  subtitle?: string;
   content: string;
 }
 
-export default function BlogPreview({ title, content }: BlogPreviewProps) {
+export default function BlogPreview({
+  title,
+  subtitle,
+  content,
+}: BlogPreviewProps) {
   const [sanitizedContent, setSanitizedContent] = useState(
     "<p>Cargando vista previa...</p>",
   );
@@ -69,6 +74,7 @@ export default function BlogPreview({ title, content }: BlogPreviewProps) {
         <h1 className="text-3xl font-bold text-white mb-2">
           {title || "Título del blog"}
         </h1>
+        <h3 className="text-gray-400 text-lg mb-2">{subtitle}</h3>
         <div className="flex items-center text-gray-400 text-sm">
           <span>Por Autor del Blog</span>
           <span className="mx-2">•</span>
