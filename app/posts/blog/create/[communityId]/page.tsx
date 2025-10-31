@@ -17,6 +17,7 @@ import BlogPreview from "../../components/blog/BlogPreview";
 import Tiptap from "../../components/blog/TipTap";
 import BlogModal from "../../components/modals/BlogModal";
 import FormInput from "../../components/blog/FormInput";
+import QuizCreator from "../../components/quiz/QuizCreator";
 
 const sanitizeContent = (content: string) => {
   return DOMPurify.sanitize(content, DOM_PURIFY_CONFIG);
@@ -176,12 +177,9 @@ export default function CreateBlogPost() {
               </p>
             )}
           </div>
-          {/* <div>
-            <CreateQuiz
-              onQuestionsChange={(questions) => setQuizQuestions(questions)}
-              initialQuestions={quizQuestions}
-            />
-          </div> */}
+          <div>
+            <QuizCreator blogData={getValues()} />
+          </div>
         </>
       )}
 
