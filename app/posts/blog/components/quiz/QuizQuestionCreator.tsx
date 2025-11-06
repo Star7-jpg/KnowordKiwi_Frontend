@@ -5,13 +5,12 @@ import { useForm } from "react-hook-form";
 import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@headlessui/react";
-import InfoModal from "@/components/shared/InfoModal";
 import { questionsService } from "@/services/questions/questionsService";
 import { Trash } from "lucide-react";
 
 interface QuizQuestionCreatorProps {
   postId?: number; // Optional - only provided when adding to existing post
-  onComplete: () => void;
+  onComplete: (questions?: Question[]) => void;
   onQuestionsChange?: (questions: any[]) => void; // Callback to notify parent of question changes
 }
 
@@ -162,7 +161,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         });
 
         // Notify parent component that quiz creation is complete
-        onComplete();
+        onComplete(questions);
       } else {
         // If no postId, we're creating questions for a new blog post
         // In this case, we just pass the questions back to the parent
@@ -175,7 +174,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         );
 
         // Notify parent component that quiz creation is complete
-        onComplete();
+        onComplete(questions);
       }
     } catch (error) {
       console.error("Error creating questions:", error);
@@ -216,6 +215,12 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         <h4 className="text-xl font-bold text-white mb-4">
           Agregar Nueva Pregunta
         </h4>
+
+        {errorMessage && (
+          <div className="my-4 p-4 bg-opacity-20 border border-red-500 text-red-300 rounded-lg">
+            <p className="text-sm">{errorMessage}</p>
+          </div>
+        )}
 
         {/* Área de la Pregunta */}
         <div className="mb-6">
@@ -358,13 +363,6 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
           ? "Guardando Quiz..."
           : `Guardar Quiz (${questions.length} pregunta${questions.length !== 1 ? "s" : ""})`}
       </Button>
-      {errorMessage && (
-        <InfoModal
-          isOpen={!!errorMessage}
-          message={errorMessage}
-          onClose={() => setErrorMessage(null)}
-        />
-      )}
     </div>
   );
 };
