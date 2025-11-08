@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Question } from "@/types/posts/quiz/question";
 
 export const blogPostSchema = z.object({
   title: z
@@ -13,6 +14,19 @@ export const blogPostSchema = z.object({
     .string()
     .min(50, "El contenido es obligatorio y debe tener al menos 50 caracteres")
     .max(50000, "El contenido no debe exceder los 50,000 caracteres"),
+  quiz: z
+    .array(
+      z.object({
+        question: z.string(),
+        options: z.array(
+          z.object({
+            text: z.string(),
+            isCorrect: z.boolean(),
+          }),
+        ),
+      }),
+    )
+    .optional(),
 });
 
 export const quizQuestionSchema = z.object({

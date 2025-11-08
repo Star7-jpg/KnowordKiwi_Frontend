@@ -63,10 +63,25 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOptionTextChange = (index: number, value: string) => {
-    if (value.length > 100) return; // Limitar a 200 caracteres
+    if (value.length > 100) return; // Limitar a 100 caracteres
+    
     const newOptions = [...options];
     newOptions[index].text = value;
     setOptions(newOptions);
+
+    // Check for duplicate options in real-time
+    const nonEmptyOptions = newOptions.filter(opt => opt.text.trim() !== "");
+    const optionTexts = nonEmptyOptions.map(opt => opt.text.trim().toLowerCase());
+    const uniqueOptionTexts = new Set(optionTexts);
+    
+    if (optionTexts.length !== uniqueOptionTexts.size) {
+      setErrorMessage("Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.");
+    } else {
+      // Only clear error if it was specifically about duplicate options
+      if (errorMessage?.includes("no pueden repetirse")) {
+        setErrorMessage(null);
+      }
+    }
   };
 
   const handleCorrectOptionChange = (id: string) => {
@@ -76,17 +91,36 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }));
     setOptions(newOptions);
     setSelectedCorrectOption(id);
+    
+    // Clear the "no correct option selected" error when a correct option is selected
+    if (errorMessage?.includes("selecciona la respuesta correcta")) {
+      setErrorMessage(null);
+    }
   };
 
   const handleAddQuestion = () => {
     if (
       !questionTitle.trim() ||
-      options.some((opt) => !opt.text.trim()) ||
-      !selectedCorrectOption
+      options.some((opt) => !opt.text.trim())
     ) {
       setErrorMessage(
-        "Por favor, completa el título de la pregunta, todas las opciones y selecciona la respuesta correcta.",
+        "Por favor, completa el título de la pregunta y todas las opciones.",
       );
+      return;
+    }
+
+    // Validate that no two options have the same text
+    const nonEmptyOptions = options.filter(opt => opt.text.trim() !== "");
+    const optionTexts = nonEmptyOptions.map(opt => opt.text.trim().toLowerCase());
+    const uniqueOptionTexts = new Set(optionTexts);
+    
+    if (optionTexts.length !== uniqueOptionTexts.size) {
+      setErrorMessage("Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.");
+      return;
+    }
+
+    if (!selectedCorrectOption) {
+      setErrorMessage("Por favor, selecciona la respuesta correcta.");
       return;
     }
 
@@ -166,12 +200,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         // If no postId, we're creating questions for a new blog post
         // In this case, we just pass the questions back to the parent
         // since the blog post creation will handle saving them together
-        onQuestionsChange?.(
-          questions.map((q) => ({
-            title: q.question,
-            options: q.options,
-          })),
-        );
+        onQuestionsChange?.(questions);
 
         // Notify parent component that quiz creation is complete
         onComplete(questions);

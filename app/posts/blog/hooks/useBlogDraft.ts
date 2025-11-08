@@ -30,6 +30,9 @@ export const useBlogDraft = (formMethods: UseFormReturn<BlogPostFormData>) => {
         setValue("title", draft.title);
         setValue("subtitle", draft.subtitle);
         setValue("content", sanitizeContent(draft.content));
+        if (draft.quiz) {
+          setValue("quiz", draft.quiz);
+        }
       } catch (e) {
         console.error("Error al cargar el borrador:", e);
         localStorage.removeItem(DRAFT_KEY);

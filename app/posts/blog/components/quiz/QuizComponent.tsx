@@ -71,8 +71,8 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
     if (!showResults) return 0;
 
     let correct = 0;
-    questions?.forEach((q) => {
-      const questionId = q.id || `temp-${questions.indexOf(q)}`; // Use index as fallback for new questions without id
+    questions?.forEach((q, index) => {
+      const questionId = q.id !== undefined ? q.id : `temp-${index}`; // Use index as fallback for new questions without id
       const selectedAnswer = answers[questionId];
       const correctOption = q.options.find((opt) => opt.isCorrect);
       if (selectedAnswer === correctOption?.text) {
@@ -121,10 +121,12 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions }) => {
                   return (
                     <div
                       key={optionIndex}
-                      onClick={() =>
-                        !isSubmitted &&
-                        handleAnswerSelect(questionId, option.text)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isSubmitted) {
+                          handleAnswerSelect(questionId, option.text);
+                        }
+                      }}
                       className={`
                         flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200
                         ${

@@ -16,6 +16,7 @@ import {
 import BlogPreview from "../../components/blog/BlogPreview";
 import BlogHeader from "../../components/blog/CreateBlogHeader";
 import Tiptap from "../../components/blog/TipTap";
+import QuizCreator from "../../components/quiz/QuizCreator";
 import { useDebounce } from "../../hooks/useDebounce";
 import { BlogPostFormData, blogPostSchema } from "../../schemas";
 import { DOM_PURIFY_CONFIG } from "../../config/dom-purify.config";
@@ -64,11 +65,22 @@ export default function EditBlogPost() {
         setLoading(true);
         const data: BlogById = await getBlogPostById(id);
 
+        // Convertir las preguntas existentes al formato correcto si existen
+        const quizData = data.questions && data.questions.length > 0 
+          ? data.questions.map(q => ({
+              question: q.title,
+              options: q.options
+            }))
+          : undefined;
+
         // Establecer valores iniciales con los datos existentes
         setValue("title", data.title);
         setValue("subtitle", data.blogContent.subtitle);
         const sanitizedContent = sanitizeContent(data.blogContent.content);
         setValue("content", sanitizedContent);
+        if (quizData) {
+          setValue("quiz", quizData);
+        }
       } catch (error) {
         console.error("Error fetching blog post for editing:", error);
         setModal({
@@ -153,6 +165,10 @@ export default function EditBlogPost() {
         title: data.title,
         subtitle: data.subtitle,
         content: sanitizedContent,
+        questions: data.quiz?.map(q => ({
+          title: q.question,
+          options: q.options
+        })) || [],
         // communityId no se puede cambiar en la edición
       };
 
@@ -306,6 +322,12 @@ export default function EditBlogPost() {
               {errors.content.message}
             </p>
           )}
+        </div>
+      )}
+
+      {!isPreviewMode && (
+        <div>
+          <QuizCreator formMethods={formMethods} />
         </div>
       )}
 

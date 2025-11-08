@@ -84,7 +84,10 @@ export default function CreateBlogPost() {
         subtitle: data.subtitle,
         content: sanitizedContent,
         communityId: communityId,
-        // questions: quizQuestions, // TODO: Ignorar por ahora
+        questions: data.quiz?.map(q => ({
+          title: q.question,
+          options: q.options
+        })) || [],
       };
 
       const response = await createBlogPost(blogData);
@@ -178,7 +181,7 @@ export default function CreateBlogPost() {
             )}
           </div>
           <div>
-            <QuizCreator blogData={getValues()} />
+            <QuizCreator formMethods={formMethods} />
           </div>
         </>
       )}

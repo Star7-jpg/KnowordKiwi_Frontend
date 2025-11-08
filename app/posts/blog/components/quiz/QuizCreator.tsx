@@ -1,5 +1,7 @@
 import { Field, Label, Switch } from "@headlessui/react";
 import { useState } from "react";
+import { UseFormReturn } from "react-hook-form";
+import { BlogPostFormData } from "@/app/posts/blog/schemas";
 import QuizModal from "../modals/QuizModal";
 import BlogPreview from "../blog/BlogPreview";
 import QuizQuestionCreator from "./QuizQuestionCreator";
@@ -8,22 +10,27 @@ import ViewModeToggler, { ViewMode } from "./ViewModeToggler";
 import { Question } from "@/types/posts/quiz/question";
 
 interface QuizCreatorProps {
-  blogData: {
-    title: string;
-    subtitle: string;
-    content: string;
-  };
+  formMethods: UseFormReturn<BlogPostFormData>;
 }
 
-export default function QuizCreator({
-  blogData: { title, subtitle, content },
-}: QuizCreatorProps) {
+export default function QuizCreator({ formMethods }: QuizCreatorProps) {
+  const { getValues, setValue } = formMethods;
   const [isQuizEnabled, setIsQuizEnabled] = useState(false);
   const [activeView, setActiveView] = useState<ViewMode>("blog");
   const [savedQuiz, setSavedQuiz] = useState<Question[] | null>(null);
 
+  // Load saved quiz from form if exists
+  const formValues = getValues();
+  const quizFromForm = formValues.quiz || null;
+  
+  // Set initial savedQuiz if it exists in form
+  if (quizFromForm && !savedQuiz) {
+    setSavedQuiz(quizFromForm);
+  }
+
   const handlePreview = () => {
     if (activeView === "blog") {
+      const { title, subtitle, content } = getValues();
       return (
         <BlogPreview title={title} subtitle={subtitle} content={content} />
       );
@@ -31,15 +38,27 @@ export default function QuizCreator({
       if (savedQuiz && savedQuiz.length > 0) {
         return <QuizDisplay questions={savedQuiz} />;
       } else {
-        return <QuizQuestionCreator onComplete={handleOnComplete} />;
+        return (
+          <QuizQuestionCreator 
+            onComplete={handleOnComplete} 
+            onQuestionsChange={handleQuestionsChange} 
+          />
+        );
       }
     }
     return null;
   };
 
+  const handleQuestionsChange = (questions: any[]) => {
+    // This is called when questions are being created, but not yet completed
+    // We might want to save draft here as well if we want real-time saving
+  };
+
   const handleOnComplete = (questions?: Question[]) => {
     if (questions && questions.length > 0) {
       setSavedQuiz(questions);
+      // Update the form with the new quiz data
+      setValue("quiz", questions);
     }
     setIsQuizEnabled(false);
     setActiveView("blog");
@@ -57,7 +76,7 @@ export default function QuizCreator({
           {savedQuiz ? (
             <>
               <Label className="text-lg">
-                Quiz guardado recientemente
+                Quiz guardado en el borrador
               </Label>
               <button
                 onClick={handleShowSavedQuiz}
