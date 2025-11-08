@@ -20,6 +20,7 @@ const sanitizeContent = (content: string): string => {
 export const useBlogDraft = (formMethods: UseFormReturn<BlogPostFormData>) => {
   const { getValues, setValue, watch } = formMethods;
   const [savingStatus, setSavingStatus] = useState<SavingStatus>("idle");
+  const [loadedDraft, setLoadedDraft] = useState<BlogDraft | null>(null);
 
   // Cargar borrador al montar
   useEffect(() => {
@@ -27,11 +28,15 @@ export const useBlogDraft = (formMethods: UseFormReturn<BlogPostFormData>) => {
     if (savedDraft) {
       try {
         const draft: BlogDraft = JSON.parse(savedDraft);
-        setValue("title", draft.title);
-        setValue("subtitle", draft.subtitle);
-        setValue("content", sanitizeContent(draft.content));
-        if (draft.quiz) {
-          setValue("quiz", draft.quiz);
+        // Solo cargar y notificar si el borrador tiene contenido significativo (ej. un título)
+        if (draft.title.trim()) {
+          setValue("title", draft.title);
+          setValue("subtitle", draft.subtitle);
+          setValue("content", sanitizeContent(draft.content));
+          if (draft.quiz) {
+            setValue("quiz", draft.quiz);
+          }
+          setLoadedDraft(draft);
         }
       } catch (e) {
         console.error("Error al cargar el borrador:", e);
@@ -43,7 +48,14 @@ export const useBlogDraft = (formMethods: UseFormReturn<BlogPostFormData>) => {
   // Guardar borrador
   const saveDraft = useCallback(() => {
     setSavingStatus("saving");
-    const draft: BlogDraft = { ...getValues(), lastSaved: new Date() };
+    const currentValues = getValues();
+
+    // No guardar si no hay al menos un título.
+    if (!currentValues.title.trim()) {
+      setSavingStatus("idle"); // Reset status
+      return;
+    }
+    const draft: BlogDraft = { ...currentValues, lastSaved: new Date() };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     setTimeout(() => {
       setSavingStatus("saved");
@@ -61,5 +73,5 @@ export const useBlogDraft = (formMethods: UseFormReturn<BlogPostFormData>) => {
     return () => subscription.unsubscribe();
   }, [watch, debouncedSaveDraft]);
 
-  return { savingStatus, saveDraft };
+  return { savingStatus, saveDraft, loadedDraft };
 };

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { Question } from "@/types/posts/quiz/question";
 
 export const blogPostSchema = z.object({
   title: z

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -18,6 +18,7 @@ import Tiptap from "../../components/blog/TipTap";
 import BlogModal from "../../components/modals/BlogModal";
 import FormInput from "../../components/blog/FormInput";
 import QuizCreator from "../../components/quiz/QuizCreator";
+import BlogDraftCofirmationModal from "../../components/modals/BlogDraftConfirmationModal";
 
 const sanitizeContent = (content: string) => {
   return DOMPurify.sanitize(content, DOM_PURIFY_CONFIG);
@@ -42,6 +43,7 @@ export default function CreateBlogPost() {
   } = formMethods;
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
 
   const [modal, setModal] = useState({
     isOpen: false,
@@ -50,7 +52,14 @@ export default function CreateBlogPost() {
     onConfirm: () => {},
   });
 
-  const { savingStatus, saveDraft } = useBlogDraft(formMethods);
+  const { savingStatus, saveDraft, loadedDraft } = useBlogDraft(formMethods);
+
+  // Este efecto se ejecutará cuando el hook useBlogDraft cargue un borrador válido.
+  useEffect(() => {
+    if (loadedDraft) {
+      setIsDraftModalOpen(true);
+    }
+  }, [loadedDraft]);
 
   const handleSave = async () => {
     saveDraft();
@@ -84,10 +93,11 @@ export default function CreateBlogPost() {
         subtitle: data.subtitle,
         content: sanitizedContent,
         communityId: communityId,
-        questions: data.quiz?.map(q => ({
-          title: q.question,
-          options: q.options
-        })) || [],
+        questions:
+          data.quiz?.map((q) => ({
+            title: q.question,
+            options: q.options,
+          })) || [],
       };
 
       const response = await createBlogPost(blogData);
@@ -194,6 +204,39 @@ export default function CreateBlogPost() {
       >
         {modal.message}
       </BlogModal>
+
+      <BlogDraftCofirmationModal
+        isOpen={isDraftModalOpen}
+        onClose={() => setIsDraftModalOpen(false)}
+        title="Borrador encontrado"
+        confirmText="Cargar borrador"
+        onConfirm={() => {
+          // El borrador ya fue cargado por el hook useBlogDraft, solo cerramos el modal.
+          setIsDraftModalOpen(false);
+        }}
+        cancelText="Crear nuevo post"
+        onCancel={() => {
+          // Limpiamos el localStorage y reseteamos el formulario.
+          localStorage.removeItem("blogDraft");
+          formMethods.reset({ title: "", subtitle: "", content: "", quiz: [] });
+          setIsDraftModalOpen(false);
+        }}
+      >
+        <div>
+          <p className="mb-4">
+            Hemos encontrado un borrador guardado. ¿Deseas continuar editándolo
+            o prefieres empezar un nuevo post desde cero?
+          </p>
+          {loadedDraft && (
+            <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-sm">
+              <p className="font-bold text-white truncate">
+                {loadedDraft.title}
+              </p>
+              <p className="text-gray-400 truncate">{loadedDraft.subtitle}</p>
+            </div>
+          )}
+        </div>
+      </BlogDraftCofirmationModal>
     </div>
   );
 }
