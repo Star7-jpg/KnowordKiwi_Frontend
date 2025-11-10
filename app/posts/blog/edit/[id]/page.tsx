@@ -32,6 +32,11 @@ export default function EditBlogPost() {
   const id = Number(params.id);
   const router = useRouter();
 
+  const formMethods = useForm<BlogPostFormData>({
+    resolver: zodResolver(blogPostSchema),
+    defaultValues: { title: "", subtitle: "", content: "" },
+  });
+
   const {
     control,
     handleSubmit: handleSubmitForm,
@@ -39,14 +44,7 @@ export default function EditBlogPost() {
     setValue,
     getValues,
     watch,
-  } = useForm<BlogPostFormData>({
-    resolver: zodResolver(blogPostSchema),
-    defaultValues: {
-      title: "",
-      subtitle: "",
-      content: "",
-    },
-  });
+  } = formMethods;
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [savingStatus, setSavingStatus] = useState<SavingStatus>("idle");
@@ -66,12 +64,13 @@ export default function EditBlogPost() {
         const data: BlogById = await getBlogPostById(id);
 
         // Convertir las preguntas existentes al formato correcto si existen
-        const quizData = data.questions && data.questions.length > 0 
-          ? data.questions.map(q => ({
-              question: q.title,
-              options: q.options
-            }))
-          : undefined;
+        const quizData =
+          data.questions && data.questions.length > 0
+            ? data.questions.map((q) => ({
+                question: q.title,
+                options: q.options,
+              }))
+            : undefined;
 
         // Establecer valores iniciales con los datos existentes
         setValue("title", data.title);
@@ -165,10 +164,11 @@ export default function EditBlogPost() {
         title: data.title,
         subtitle: data.subtitle,
         content: sanitizedContent,
-        questions: data.quiz?.map(q => ({
-          title: q.question,
-          options: q.options
-        })) || [],
+        questions:
+          data.quiz?.map((q) => ({
+            title: q.question,
+            options: q.options,
+          })) || [],
         // communityId no se puede cambiar en la edición
       };
 

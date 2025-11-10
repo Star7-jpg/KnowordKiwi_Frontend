@@ -50,7 +50,7 @@ export default function BlogHeader({
           onClick={onSave}
           className="px-4 py-2 border border-primary text-white rounded-md hover:border-primary-hover  transition-colors font-semibold"
         >
-          {isEditing ? "Guardar cambios" : "Guardar borrador"}
+          <span>Guardar borrador</span>
         </Button>
         <Button
           onClick={onSubmit}
