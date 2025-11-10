@@ -22,18 +22,18 @@ const ViewModeToggler: React.FC<ViewModeTogglerProps> = ({
   return (
     <div className="bg-bg-gray rounded-md flex p-1">
       <Button
-        className={getButtonClass("blog")}
-        onClick={() => onViewChange("blog")}
-      >
-        <FileText size={18} />
-        <span>Blog</span>
-      </Button>
-      <Button
         className={getButtonClass("quiz")}
         onClick={() => onViewChange("quiz")}
       >
         <BookCheck size={18} />
         <span>Quiz</span>
+      </Button>
+      <Button
+        className={getButtonClass("blog")}
+        onClick={() => onViewChange("blog")}
+      >
+        <FileText size={18} />
+        <span>Blog</span>
       </Button>
     </div>
   );

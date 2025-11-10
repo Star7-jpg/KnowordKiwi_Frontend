@@ -16,13 +16,13 @@ interface QuizCreatorProps {
 export default function QuizCreator({ formMethods }: QuizCreatorProps) {
   const { getValues, setValue } = formMethods;
   const [isQuizEnabled, setIsQuizEnabled] = useState(false);
-  const [activeView, setActiveView] = useState<ViewMode>("blog");
+  const [activeView, setActiveView] = useState<ViewMode>("quiz");
   const [savedQuiz, setSavedQuiz] = useState<Question[] | null>(null);
 
   // Load saved quiz from form if exists
   const formValues = getValues();
   const quizFromForm = formValues.quiz || null;
-  
+
   // Set initial savedQuiz if it exists in form
   if (quizFromForm && !savedQuiz) {
     setSavedQuiz(quizFromForm);
@@ -39,9 +39,9 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
         return <QuizDisplay questions={savedQuiz} />;
       } else {
         return (
-          <QuizQuestionCreator 
-            onComplete={handleOnComplete} 
-            onQuestionsChange={handleQuestionsChange} 
+          <QuizQuestionCreator
+            onComplete={handleOnComplete}
+            onQuestionsChange={handleQuestionsChange}
           />
         );
       }
@@ -75,9 +75,7 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
         <div className="flex justify-between items-center">
           {savedQuiz ? (
             <>
-              <Label className="text-lg">
-                Quiz guardado en el borrador
-              </Label>
+              <Label className="text-lg">Quiz guardado en el borrador</Label>
               <button
                 onClick={handleShowSavedQuiz}
                 className="text-blue-500 hover:text-blue-400 underline text-lg"
