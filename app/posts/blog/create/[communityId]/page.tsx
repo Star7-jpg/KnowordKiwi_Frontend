@@ -223,16 +223,16 @@ export default function CreateBlogPost() {
         }}
       >
         <div>
-          <p className="mb-4">
+          <div className="mb-4">
             Hemos encontrado un borrador guardado. ¿Deseas continuar editándolo
             o prefieres empezar un nuevo post desde cero?
-          </p>
+          </div>
           {loadedDraft && (
             <div className="p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-sm">
-              <p className="font-bold text-white truncate">
+              <div className="font-bold text-white truncate">
                 {loadedDraft.title}
-              </p>
-              <p className="text-gray-400 truncate">{loadedDraft.subtitle}</p>
+              </div>
+              <div className="text-gray-400 truncate">{loadedDraft.subtitle}</div>
             </div>
           )}
         </div>

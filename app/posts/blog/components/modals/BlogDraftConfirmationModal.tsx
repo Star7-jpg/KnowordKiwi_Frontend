@@ -77,7 +77,7 @@ export default function BlogDraftCofirmationModal({
                   {title}
                 </DialogTitle>
                 <div className="mt-4">
-                  <p className="text-sm text-gray-300">{children}</p>
+                  <div className="text-sm text-gray-300">{children}</div>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
