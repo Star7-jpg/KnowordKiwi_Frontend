@@ -216,9 +216,14 @@ export default function CreateBlogPost() {
         }}
         cancelText="Crear nuevo post"
         onCancel={() => {
-          // Limpiamos el localStorage y reseteamos el formulario.
+          // Limpiamos el localStorage y reseteamos el formulario junto con el quiz.
           localStorage.removeItem("blogDraft");
-          formMethods.reset({ title: "", subtitle: "", content: "", quiz: [] });
+          formMethods.reset({
+            title: "",
+            subtitle: "",
+            content: "",
+            quiz: undefined,
+          });
           setIsDraftModalOpen(false);
         }}
       >

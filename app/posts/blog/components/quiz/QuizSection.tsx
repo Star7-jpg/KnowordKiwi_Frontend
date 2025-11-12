@@ -19,6 +19,7 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
   const [activeView, setActiveView] = useState<ViewMode>("quiz");
 
   const savedQuiz = watch("quiz");
+  const hasSavedQuiz = Array.isArray(savedQuiz) && savedQuiz.length > 0;
 
   const handlePreview = () => {
     if (activeView === "blog") {
@@ -58,7 +59,7 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
     <>
       <Field as="div" className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
-          {savedQuiz ? (
+          {hasSavedQuiz ? (
             <>
               <Label className="text-lg">Quiz guardado en el borrador</Label>
               <button
@@ -76,7 +77,7 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
             </>
           )}
         </div>
-        {!savedQuiz && (
+        {!hasSavedQuiz && (
           <Switch
             checked={isModalOpen}
             onChange={setIsModalOpen}
@@ -89,7 +90,7 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
       <QuizModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={savedQuiz ? "Editar Quiz" : "Crear Quiz"}
+        title={hasSavedQuiz ? "Editar Quiz" : "Crear Quiz"}
       >
         <div className="flex flex-col items-center gap-4">
           <ViewModeToggler
