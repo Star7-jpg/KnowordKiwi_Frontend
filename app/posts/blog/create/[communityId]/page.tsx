@@ -17,7 +17,7 @@ import BlogPreview from "../../components/blog/BlogPreview";
 import Tiptap from "../../components/blog/TipTap";
 import BlogModal from "../../components/modals/BlogModal";
 import FormInput from "../../components/blog/FormInput";
-import QuizCreator from "../../components/quiz/QuizCreator";
+import QuizSection from "../../components/quiz/QuizSection";
 import BlogDraftCofirmationModal from "../../components/modals/BlogDraftConfirmationModal";
 
 const sanitizeContent = (content: string) => {
@@ -191,7 +191,7 @@ export default function CreateBlogPost() {
             )}
           </div>
           <div>
-            <QuizCreator formMethods={formMethods} />
+            <QuizSection formMethods={formMethods} />
           </div>
         </>
       )}
@@ -232,7 +232,9 @@ export default function CreateBlogPost() {
               <div className="font-bold text-white truncate">
                 {loadedDraft.title}
               </div>
-              <div className="text-gray-400 truncate">{loadedDraft.subtitle}</div>
+              <div className="text-gray-400 truncate">
+                {loadedDraft.subtitle}
+              </div>
             </div>
           )}
         </div>

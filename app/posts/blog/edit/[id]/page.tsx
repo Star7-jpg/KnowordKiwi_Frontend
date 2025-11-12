@@ -16,10 +16,10 @@ import {
 import BlogPreview from "../../components/blog/BlogPreview";
 import BlogHeader from "../../components/blog/CreateBlogHeader";
 import Tiptap from "../../components/blog/TipTap";
-import QuizCreator from "../../components/quiz/QuizCreator";
 import { useDebounce } from "../../hooks/useDebounce";
 import { BlogPostFormData, blogPostSchema } from "../../schemas";
 import { DOM_PURIFY_CONFIG } from "../../config/dom-purify.config";
+import QuizSection from "../../components/quiz/QuizSection";
 
 const sanitizeContent = (content: string) => {
   return DOMPurify.sanitize(content, DOM_PURIFY_CONFIG);
@@ -327,7 +327,7 @@ export default function EditBlogPost() {
 
       {!isPreviewMode && (
         <div>
-          <QuizCreator formMethods={formMethods} />
+          <QuizSection formMethods={formMethods} />
         </div>
       )}
 

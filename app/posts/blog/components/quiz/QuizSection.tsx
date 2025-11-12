@@ -14,23 +14,15 @@ interface QuizCreatorProps {
 }
 
 export default function QuizCreator({ formMethods }: QuizCreatorProps) {
-  const { getValues, setValue } = formMethods;
-  const [isQuizEnabled, setIsQuizEnabled] = useState(false);
+  const { watch, setValue } = formMethods;
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeView, setActiveView] = useState<ViewMode>("quiz");
-  const [savedQuiz, setSavedQuiz] = useState<Question[] | null>(null);
 
-  // Load saved quiz from form if exists
-  const formValues = getValues();
-  const quizFromForm = formValues.quiz || null;
-
-  // Set initial savedQuiz if it exists in form
-  if (quizFromForm && !savedQuiz) {
-    setSavedQuiz(quizFromForm);
-  }
+  const savedQuiz = watch("quiz");
 
   const handlePreview = () => {
     if (activeView === "blog") {
-      const { title, subtitle, content } = getValues();
+      const { title, subtitle, content } = formMethods.getValues();
       return (
         <BlogPreview title={title} subtitle={subtitle} content={content} />
       );
@@ -40,8 +32,8 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
       } else {
         return (
           <QuizQuestionCreator
-            onComplete={handleOnComplete}
-            onQuestionsChange={handleQuestionsChange}
+            initialQuestions={savedQuiz}
+            onSave={handleOnSave}
           />
         );
       }
@@ -49,24 +41,17 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
     return null;
   };
 
-  const handleQuestionsChange = (questions: any[]) => {
-    // This is called when questions are being created, but not yet completed
-    // We might want to save draft here as well if we want real-time saving
-  };
-
-  const handleOnComplete = (questions?: Question[]) => {
+  const handleOnSave = (questions?: Question[]) => {
     if (questions && questions.length > 0) {
-      setSavedQuiz(questions);
-      // Update the form with the new quiz data
       setValue("quiz", questions);
+    } else {
+      setValue("quiz", undefined); // Si no hay preguntas, limpiamos el campo
     }
-    setIsQuizEnabled(false);
-    setActiveView("blog");
+    setIsModalOpen(false);
   };
 
   const handleShowSavedQuiz = () => {
-    setActiveView("quiz");
-    setIsQuizEnabled(true);
+    setIsModalOpen(true);
   };
 
   return (
@@ -93,8 +78,8 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
         </div>
         {!savedQuiz && (
           <Switch
-            checked={isQuizEnabled}
-            onChange={setIsQuizEnabled}
+            checked={isModalOpen}
+            onChange={setIsModalOpen}
             className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-800 transition data-checked:bg-primary"
           >
             <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
@@ -102,9 +87,9 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
         )}
       </Field>
       <QuizModal
-        isOpen={isQuizEnabled}
-        onClose={() => setIsQuizEnabled(false)}
-        title="Crear Quiz"
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={savedQuiz ? "Editar Quiz" : "Crear Quiz"}
       >
         <div className="flex flex-col items-center gap-4">
           <ViewModeToggler

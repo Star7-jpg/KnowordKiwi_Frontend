@@ -5,19 +5,17 @@ import { useForm } from "react-hook-form";
 import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@headlessui/react";
-import { questionsService } from "@/services/questions/questionsService";
 import { Trash } from "lucide-react";
 
 interface QuizQuestionCreatorProps {
   postId?: number; // Optional - only provided when adding to existing post
-  onComplete: (questions?: Question[]) => void;
-  onQuestionsChange?: (questions: any[]) => void; // Callback to notify parent of question changes
+  initialQuestions?: Question[];
+  onSave: (questions?: Question[]) => void;
 }
 
 const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
-  postId,
-  onComplete,
-  onQuestionsChange,
+  initialQuestions = [],
+  onSave,
 }) => {
   const {
     register,
@@ -58,24 +56,28 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   const [selectedCorrectOption, setSelectedCorrectOption] = useState<
     string | null
   >(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOptionTextChange = (index: number, value: string) => {
     if (value.length > 100) return; // Limitar a 100 caracteres
-    
+
     const newOptions = [...options];
     newOptions[index].text = value;
     setOptions(newOptions);
 
     // Check for duplicate options in real-time
-    const nonEmptyOptions = newOptions.filter(opt => opt.text.trim() !== "");
-    const optionTexts = nonEmptyOptions.map(opt => opt.text.trim().toLowerCase());
+    const nonEmptyOptions = newOptions.filter((opt) => opt.text.trim() !== "");
+    const optionTexts = nonEmptyOptions.map((opt) =>
+      opt.text.trim().toLowerCase(),
+    );
     const uniqueOptionTexts = new Set(optionTexts);
-    
+
     if (optionTexts.length !== uniqueOptionTexts.size) {
-      setErrorMessage("Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.");
+      setErrorMessage(
+        "Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.",
+      );
     } else {
       // Only clear error if it was specifically about duplicate options
       if (errorMessage?.includes("no pueden repetirse")) {
@@ -91,7 +93,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }));
     setOptions(newOptions);
     setSelectedCorrectOption(id);
-    
+
     // Clear the "no correct option selected" error when a correct option is selected
     if (errorMessage?.includes("selecciona la respuesta correcta")) {
       setErrorMessage(null);
@@ -99,10 +101,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   };
 
   const handleAddQuestion = () => {
-    if (
-      !questionTitle.trim() ||
-      options.some((opt) => !opt.text.trim())
-    ) {
+    if (!questionTitle.trim() || options.some((opt) => !opt.text.trim())) {
       setErrorMessage(
         "Por favor, completa el título de la pregunta y todas las opciones.",
       );
@@ -110,12 +109,16 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }
 
     // Validate that no two options have the same text
-    const nonEmptyOptions = options.filter(opt => opt.text.trim() !== "");
-    const optionTexts = nonEmptyOptions.map(opt => opt.text.trim().toLowerCase());
+    const nonEmptyOptions = options.filter((opt) => opt.text.trim() !== "");
+    const optionTexts = nonEmptyOptions.map((opt) =>
+      opt.text.trim().toLowerCase(),
+    );
     const uniqueOptionTexts = new Set(optionTexts);
-    
+
     if (optionTexts.length !== uniqueOptionTexts.size) {
-      setErrorMessage("Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.");
+      setErrorMessage(
+        "Las opciones de respuesta no pueden repetirse. Por favor, asegúrate que cada opción tenga un texto diferente.",
+      );
       return;
     }
 
@@ -180,33 +183,11 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
       return;
     }
 
+    // En lugar de interactuar con servicios, simplemente notificamos al padre.
+    // El componente padre (Create/Edit page) es responsable de la persistencia.
     setIsSubmitting(true);
-
     try {
-      // If postId is provided, we're adding questions to an existing post
-      if (postId) {
-        // Send the questions to the backend using the createManyQuestions endpoint
-        await questionsService.createManyQuestions({
-          postId: postId,
-          questions: questions.map((q) => ({
-            title: q.question,
-            options: q.options,
-          })),
-        });
-
-        // Notify parent component that quiz creation is complete
-        onComplete(questions);
-      } else {
-        // If no postId, we're creating questions for a new blog post
-        // In this case, we just pass the questions back to the parent
-        // since the blog post creation will handle saving them together
-        onQuestionsChange?.(questions);
-
-        // Notify parent component that quiz creation is complete
-        onComplete(questions);
-      }
-    } catch (error) {
-      console.error("Error creating questions:", error);
+      onSave(questions);
       setErrorMessage(
         "Ocurrió un error al guardar las preguntas. Por favor intenta de nuevo.",
       );
@@ -244,13 +225,6 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
         <h4 className="text-xl font-bold text-white mb-4">
           Agregar Nueva Pregunta
         </h4>
-
-        {errorMessage && (
-          <div className="my-4 p-4 bg-opacity-20 border border-red-500 text-red-300 rounded-lg">
-            <p className="text-sm">{errorMessage}</p>
-          </div>
-        )}
-
         {/* Área de la Pregunta */}
         <div className="mb-6">
           <label
@@ -313,6 +287,13 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
             </div>
           ))}
         </div>
+
+        {/* Mensaje de Error */}
+        {errorMessage && (
+          <div className="mt-4 mb-6 p-4 bg-opacity-20 border border-red-500 text-red-300 rounded-lg">
+            <p className="text-sm">{errorMessage}</p>
+          </div>
+        )}
 
         {/* Botón para agregar pregunta */}
         <Button
