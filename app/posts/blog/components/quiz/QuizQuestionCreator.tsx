@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { QuizQuestionFormData, quizQuestionSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@headlessui/react";
-import { Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 
 interface QuizQuestionCreatorProps {
   postId?: number; // Optional - only provided when adding to existing post
@@ -59,6 +59,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const handleOptionTextChange = (index: number, value: string) => {
     if (value.length > 100) return; // Limitar a 100 caracteres
@@ -101,6 +102,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
   };
 
   const handleAddQuestion = () => {
+    setIsEditing(false);
     if (!questionTitle.trim() || options.some((opt) => !opt.text.trim())) {
       setErrorMessage(
         "Por favor, completa el título de la pregunta y todas las opciones.",
@@ -140,7 +142,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     setQuestions([...questions, newQuestion]);
 
     // Reset the form
-    reset();
+    reset({ questionTitle: "" });
     setOptions([
       {
         text: "",
@@ -175,6 +177,37 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     const updatedQuestions = [...questions];
     updatedQuestions.splice(index, 1);
     setQuestions(updatedQuestions);
+  };
+
+  const handleEditQuestion = (index: number) => {
+    setIsEditing(true);
+    const questionToEdit = questions[index];
+    // Populate the form with the question data
+    reset({ questionTitle: questionToEdit.question });
+    const updatedOptions = questionToEdit.options.map((opt, idx) => ({
+      text: opt.text,
+      isCorrect: opt.isCorrect,
+      id: String.fromCharCode(65 + idx),
+      color:
+        idx === 0
+          ? "bg-purple-600 border-purple-600"
+          : idx === 1
+            ? "bg-yellow-500 border-yellow-500"
+            : idx === 2
+              ? "bg-green-500 border-green-500"
+              : "bg-red-600 border-red-600",
+    }));
+    setOptions(updatedOptions);
+    const correctOption = updatedOptions.find((opt) => opt.isCorrect);
+    setSelectedCorrectOption(correctOption ? correctOption.id : null);
+
+    // Remove the question from the list to allow re-adding after edit
+    const updatedQuestions = [...questions];
+    updatedQuestions.splice(index, 1);
+    setQuestions(updatedQuestions);
+
+    // Clear the error message
+    setErrorMessage(null);
   };
 
   const handleSubmitQuiz = async () => {
@@ -300,7 +333,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
           onClick={handleAddQuestion}
           className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold text-lg rounded-xl transition duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 transform hover:-translate-y-0.5"
         >
-          Agregar Pregunta al Quiz
+          {isEditing ? "Guardar Cambios" : "Agregar Pregunta"}
         </Button>
       </div>
 
@@ -345,14 +378,24 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
                     ))}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveQuestion(index)}
-                  className="text-red-400 hover:text-error ml-4 p-2 rounded-full hover:bg-red-900/20 transition duration-200"
-                  aria-label="Eliminar pregunta"
-                >
-                  <Trash />
-                </button>
+                <div className="flex items-center mt-2 gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => handleRemoveQuestion(index)}
+                    className="text-red-400 hover:text-error ml-4 p-2 rounded-full hover:bg-red-900/20 transition duration-200"
+                    aria-label="Eliminar pregunta"
+                  >
+                    <Trash />
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => handleEditQuestion(index)}
+                    className="text-blue-400 hover:text-blue-600 ml-2 p-2 rounded-full hover:bg-blue-900/20 transition duration-200"
+                    aria-label="Editar pregunta"
+                  >
+                    <Pencil />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
