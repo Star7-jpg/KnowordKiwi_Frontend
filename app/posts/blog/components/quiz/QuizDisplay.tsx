@@ -1,17 +1,25 @@
 import { Question } from "@/types/posts/quiz/question";
+import { Button } from "@headlessui/react";
+import { Pencil } from "lucide-react";
 
 interface QuizDisplayProps {
   questions: Question[];
+  onEdit: () => void;
 }
 
-const QuizDisplay: React.FC<QuizDisplayProps> = ({ questions }) => {
+const QuizDisplay: React.FC<QuizDisplayProps> = ({ questions, onEdit }) => {
   return (
     <div className="w-full p-8 my-8 text-gray-100 font-sans">
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-extrabold text-white">Quiz Guardado</h3>
+      <div className="flex justify-between items-center mb-8">
         <p className="text-gray-400 mt-2">
           Preguntas guardadas: {questions.length}
         </p>
+        <Button
+          onClick={onEdit}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg hover:bg-secondary-hover transition-colors"
+        >
+          <Pencil size={16} /> Editar Quiz
+        </Button>
       </div>
 
       <div className="space-y-8">

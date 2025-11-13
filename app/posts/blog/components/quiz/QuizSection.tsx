@@ -1,5 +1,5 @@
 import { Field, Label, Switch } from "@headlessui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { BlogPostFormData } from "@/app/posts/blog/schemas";
 import QuizModal from "../modals/QuizModal";
@@ -16,10 +16,18 @@ interface QuizCreatorProps {
 export default function QuizCreator({ formMethods }: QuizCreatorProps) {
   const { watch, setValue } = formMethods;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditingQuiz, setIsEditingQuiz] = useState(false);
   const [activeView, setActiveView] = useState<ViewMode>("quiz");
 
   const savedQuiz = watch("quiz");
   const hasSavedQuiz = Array.isArray(savedQuiz) && savedQuiz.length > 0;
+
+  // Reset isEditingQuiz state when modal is closed
+  useEffect(() => {
+    if (!isModalOpen) {
+      setIsEditingQuiz(false);
+    }
+  }, [isModalOpen]);
 
   const handlePreview = () => {
     if (activeView === "blog") {
@@ -28,8 +36,20 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
         <BlogPreview title={title} subtitle={subtitle} content={content} />
       );
     } else if (activeView === "quiz") {
-      if (savedQuiz && savedQuiz.length > 0) {
-        return <QuizDisplay questions={savedQuiz} />;
+      if (hasSavedQuiz && !isEditingQuiz) {
+        return (
+          <QuizDisplay
+            questions={savedQuiz}
+            onEdit={() => setIsEditingQuiz(true)}
+          />
+        );
+      } else if (isEditingQuiz) {
+        return (
+          <QuizQuestionCreator
+            initialQuestions={savedQuiz}
+            onSave={handleOnSave}
+          />
+        );
       } else {
         return (
           <QuizQuestionCreator
@@ -48,7 +68,8 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
     } else {
       setValue("quiz", undefined); // Si no hay preguntas, limpiamos el campo
     }
-    setIsModalOpen(false);
+    setIsEditingQuiz(false); // Salir del modo edición al guardar
+    // No cerramos el modal para que el usuario vea el quiz guardado.
   };
 
   const handleShowSavedQuiz = () => {
@@ -90,7 +111,13 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
       <QuizModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={hasSavedQuiz ? "Editar Quiz" : "Crear Quiz"}
+        title={
+          hasSavedQuiz
+            ? isEditingQuiz
+              ? "Editar Quiz"
+              : "Vista Previa del Quiz"
+            : "Crear Quiz"
+        }
       >
         <div className="flex flex-col items-center gap-4">
           <ViewModeToggler
