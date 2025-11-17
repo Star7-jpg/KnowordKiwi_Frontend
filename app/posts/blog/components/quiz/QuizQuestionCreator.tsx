@@ -135,7 +135,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     }
 
     const newQuestion: Question = {
-      question: questionTitle,
+      title: questionTitle,
       options: options.map(({ text, isCorrect }) => ({ text, isCorrect })),
     };
 
@@ -183,7 +183,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
     setIsEditing(true);
     const questionToEdit = questions[index];
     // Populate the form with the question data
-    reset({ questionTitle: questionToEdit.question });
+    reset({ questionTitle: questionToEdit.title });
     const updatedOptions = questionToEdit.options.map((opt, idx) => ({
       text: opt.text,
       isCorrect: opt.isCorrect,
@@ -351,7 +351,7 @@ const QuizQuestionCreator: React.FC<QuizQuestionCreatorProps> = ({
               >
                 <div>
                   <h5 className="font-semibold text-white">
-                    Pregunta {index + 1}: {question.question}
+                    Pregunta {index + 1}: {question.title}
                   </h5>
                   <div className="mt-2 space-y-1">
                     {question.options.map((option, optIndex) => (

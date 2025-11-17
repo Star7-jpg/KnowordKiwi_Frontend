@@ -1,5 +1,5 @@
 import { Button } from "@headlessui/react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface BlogHeaderProps {
   onSave: () => void;
@@ -8,6 +8,7 @@ interface BlogHeaderProps {
   onTogglePreview: () => void;
   isPreviewMode: boolean;
   isEditing?: boolean;
+  quizChanged?: boolean;
 }
 
 export default function BlogHeader({
@@ -17,6 +18,7 @@ export default function BlogHeader({
   onTogglePreview,
   isPreviewMode,
   isEditing = false,
+  quizChanged = false,
 }: BlogHeaderProps) {
   return (
     <header className="flex items-center justify-between">
@@ -52,12 +54,19 @@ export default function BlogHeader({
         >
           <span>Guardar borrador</span>
         </Button>
-        <Button
-          onClick={onSubmit}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors font-semibold"
-        >
-          {isEditing ? "Actualizar" : "Publicar"}
-        </Button>
+        <div className="relative">
+          <Button
+            onClick={onSubmit}
+            className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors font-semibold ${quizChanged ? "ring-2 ring-yellow-400 ring-offset-2 ring-offset-gray-900" : ""}`}
+          >
+            {isEditing ? "Actualizar" : "Publicar"}
+          </Button>
+          {quizChanged && (
+            <div className="absolute -top-2 -right-2 flex items-center">
+              <AlertCircle className="text-yellow-400 size-5 animate-pulse" />
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

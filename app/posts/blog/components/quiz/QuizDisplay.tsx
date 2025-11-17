@@ -25,11 +25,11 @@ const QuizDisplay: React.FC<QuizDisplayProps> = ({ questions, onEdit }) => {
       <div className="space-y-8">
         {questions.map((question, questionIndex) => (
           <div
-            key={questionIndex}
+            key={question.id || questionIndex}
             className="p-6 rounded-xl bg-bg-gray border border-gray-700 shadow-lg"
           >
             <h4 className="text-xl font-bold text-white mb-4">
-              Pregunta {questionIndex + 1}: {question.question}
+              Pregunta {questionIndex + 1}: {question.title}
             </h4>
 
             <div className="space-y-3">

@@ -11,9 +11,10 @@ import { Question } from "@/types/posts/quiz/question";
 
 interface QuizCreatorProps {
   formMethods: UseFormReturn<BlogPostFormData>;
+  onQuizChange?: () => void;
 }
 
-export default function QuizCreator({ formMethods }: QuizCreatorProps) {
+export default function QuizSection({ formMethods, onQuizChange }: QuizCreatorProps) {
   const { watch, setValue } = formMethods;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditingQuiz, setIsEditingQuiz] = useState(false);
@@ -70,6 +71,10 @@ export default function QuizCreator({ formMethods }: QuizCreatorProps) {
     }
     setIsEditingQuiz(false); // Salir del modo edición al guardar
     // No cerramos el modal para que el usuario vea el quiz guardado.
+    // Notify parent that quiz has been changed
+    if (onQuizChange) {
+      onQuizChange();
+    }
   };
 
   const handleShowSavedQuiz = () => {

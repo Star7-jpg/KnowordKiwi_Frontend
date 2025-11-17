@@ -16,7 +16,8 @@ export const blogPostSchema = z.object({
   quiz: z
     .array(
       z.object({
-        question: z.string(),
+        id: z.number().optional(),
+        title: z.string(),
         options: z.array(
           z.object({
             text: z.string(),

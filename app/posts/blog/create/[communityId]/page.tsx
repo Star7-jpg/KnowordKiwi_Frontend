@@ -95,7 +95,8 @@ export default function CreateBlogPost() {
         communityId: communityId,
         questions:
           data.quiz?.map((q) => ({
-            title: q.question,
+            id: q.id,
+            title: q.title,
             options: q.options,
           })) || [],
       };
@@ -142,6 +143,7 @@ export default function CreateBlogPost() {
         onTogglePreview={handleTogglePreview}
         isPreviewMode={isPreviewMode}
         isEditing={false}
+        quizChanged={false}
       />
       <FormInput
         name="title"

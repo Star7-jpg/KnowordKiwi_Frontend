@@ -13,6 +13,7 @@ import {
   getBlogPostById,
   updateBlogPost,
 } from "@/services/posts/blogs/blogsService";
+import { questionsService } from "@/services/questions/questionsService";
 import BlogPreview from "../../components/blog/BlogPreview";
 import BlogHeader from "../../components/blog/CreateBlogHeader";
 import Tiptap from "../../components/blog/TipTap";
@@ -55,51 +56,53 @@ export default function EditBlogPost() {
     onConfirm: () => {},
   });
   const [loading, setLoading] = useState(true);
+  const [quizChanged, setQuizChanged] = useState(false);
 
   // Cargar datos del blog existente
-  useEffect(() => {
-    const fetchBlogPost = async () => {
-      try {
-        setLoading(true);
-        const data: BlogById = await getBlogPostById(id);
+  const fetchBlogPost = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data: BlogById = await getBlogPostById(id);
 
-        // Convertir las preguntas existentes al formato correcto si existen
-        const quizData =
-          data.questions && data.questions.length > 0
-            ? data.questions.map((q) => ({
-                question: q.title,
-                options: q.options,
-              }))
-            : undefined;
+      // Convertir las preguntas existentes al formato correcto si existen
+      const quizData =
+        data.questions && data.questions.length > 0
+          ? data.questions.map((q) => ({
+              id: q.id,
+              title: q.title,
+              options: q.options,
+            }))
+          : undefined;
 
-        // Establecer valores iniciales con los datos existentes
-        setValue("title", data.title);
-        setValue("subtitle", data.blogContent.subtitle);
-        const sanitizedContent = sanitizeContent(data.blogContent.content);
-        setValue("content", sanitizedContent);
-        if (quizData) {
-          setValue("quiz", quizData);
-        }
-      } catch (error) {
-        console.error("Error fetching blog post for editing:", error);
-        setModal({
-          isOpen: true,
-          title: "Error",
-          message: "No se pudo cargar el blog para editar.",
-          onConfirm: () => {
-            setModal({ ...modal, isOpen: false });
-            router.push(`/posts/blog/${id}`);
-          },
-        });
-      } finally {
-        setLoading(false);
+      // Establecer valores iniciales con los datos existentes
+      setValue("title", data.title);
+      setValue("subtitle", data.blogContent.subtitle);
+      const sanitizedContent = sanitizeContent(data.blogContent.content);
+      setValue("content", sanitizedContent);
+      if (quizData) {
+        setValue("quiz", quizData);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching blog post for editing:", error);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: "No se pudo cargar el blog para editar.",
+        onConfirm: () => {
+          setModal((prev) => ({ ...prev, isOpen: false }));
+          router.push(`/posts/blog/${id}`);
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [id, setValue, router]);
 
+  useEffect(() => {
     if (id) {
       fetchBlogPost();
     }
-  }, [id, setValue, router, modal]);
+  }, [id, fetchBlogPost]);
 
   // Función para guardar el borrador
   const saveDraft = useCallback(() => {
@@ -159,20 +162,36 @@ export default function EditBlogPost() {
 
   const onSubmit = async (data: BlogPostFormData) => {
     try {
+      // If there are questions in the form, update them separately using the questions service
+      if (data.quiz && data.quiz.length > 0) {
+        await questionsService.updatePostQuestions(id, {
+          questions: data.quiz.map((q) => ({
+            id: q.id,
+            title: q.title,
+            options: q.options,
+          })),
+        });
+      } else {
+        // If no questions in the form, clear existing questions by sending an empty array
+        await questionsService.updatePostQuestions(id, {
+          questions: [],
+        });
+      }
+
+      // Update the main blog post content
       const sanitizedContent = sanitizeContent(data.content);
       const blogData: Partial<BlogPost> = {
         title: data.title,
         subtitle: data.subtitle,
         content: sanitizedContent,
-        questions:
-          data.quiz?.map((q) => ({
-            title: q.question,
-            options: q.options,
-          })) || [],
+        // questions are now handled separately via the questions service
         // communityId no se puede cambiar en la edición
       };
 
       await updateBlogPost(id, blogData);
+
+      // Reset quizChanged state since all changes have been saved
+      setQuizChanged(false);
 
       setModal({
         isOpen: true,
@@ -220,6 +239,7 @@ export default function EditBlogPost() {
         onTogglePreview={handleTogglePreview}
         isPreviewMode={isPreviewMode}
         isEditing={true}
+        quizChanged={quizChanged}
       />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center h-5">
@@ -327,7 +347,10 @@ export default function EditBlogPost() {
 
       {!isPreviewMode && (
         <div>
-          <QuizSection formMethods={formMethods} />
+          <QuizSection
+            formMethods={formMethods}
+            onQuizChange={() => setQuizChanged(true)}
+          />
         </div>
       )}
 
