@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // 1. Especifica las rutas que quieres proteger
 export const config = {
-  matcher: ["/profile/:path*", "/communities/:path*"],
+  matcher: ["/profile/:path*", "/communities/:path*", "/posts/:path*"],
 };
 
 export function middleware(request: NextRequest) {

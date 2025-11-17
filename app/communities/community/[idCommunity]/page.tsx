@@ -14,6 +14,7 @@ import {
 } from "@/services/community/communityServices";
 import { CommunityWithOwnership } from "@/types/community";
 import LeaveCommunityModal from "../../components/modals/LeaveCommunityModal";
+import PostsComponent from "../../components/ui/posts/PostsComponent";
 
 export default function CommunityDetail() {
   const params = useParams();
@@ -43,7 +44,10 @@ export default function CommunityDetail() {
         const data = await getCommunityById(communityId);
         setCommunity(data);
       } catch (err) {
-        setError("No se pudo cargar la comunidad. Inténtalo más tarde.");
+        setError(
+          err.response?.data?.message ||
+            "No se pudo cargar la comunidad. Inténtalo más tarde.",
+        );
         console.error("Error fetching community:", err);
       } finally {
         setLoading(false);
@@ -239,7 +243,7 @@ export default function CommunityDetail() {
           </div>
 
           {/* Información adicional */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 pt-6 border-t dark:border-gray-700">
             <div className="flex items-center">
               <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
               <div>
@@ -281,32 +285,8 @@ export default function CommunityDetail() {
 
       <div className="bg-bg-gray rounded-xl shadow-lg pb-8">
         {/* Secciones futuras */}
-        <div className="mt-12 px-8">
-          <div className="border-b border-gray-700 py-2">
-            <nav className="flex space-x-8 justify-around">
-              <button className="py-4 px-1  border-terciary text-terciary font-medium text-sm">
-                Publicaciones
-              </button>
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
-                Encuestas
-              </button>
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-300  hover:border-secondary font-medium text-sm">
-                Miembros
-              </button>
-            </nav>
-          </div>
-
-          <div className="py-8 text-center">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-12 inline-block">
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Próximamente
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Aquí se mostrarán las publicaciones de la comunidad
-              </p>
-            </div>
-          </div>
+        <div className="mt-12 px-8 py-2">
+          <PostsComponent communityId={communityId} />
         </div>
       </div>
 
