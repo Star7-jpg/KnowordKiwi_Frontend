@@ -1,6 +1,6 @@
 {
- "name": "Mi Proyecto NextJS",
-  "short_name": "Next App",
+ "name": "Knoword PWA",
+  "short_name": "Knoword",
   "description": "Una aplicación full-stack moderna construida con Next.js y NestJS.",
   "lang": "es-MX",
   "start_url": "/",
