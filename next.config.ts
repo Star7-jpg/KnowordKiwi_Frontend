@@ -1,9 +1,13 @@
-import type { NextConfig } from "next";
+import withPWA from 'next-pwa';
 
-const nextConfig: NextConfig = {
+const pwaConfig = withPWA({
+  dest: 'public'  // Directorio donde se generan los archivos PWA
+});
+
+const nextConfig = {
   images: {
     domains: ["res.cloudinary.com"],
   },
 };
 
-export default nextConfig;
+export default pwaConfig(nextConfig);
